@@ -1,8 +1,99 @@
 <?php
 declare(strict_types=1);
 
+// IMPORTANT: prevent PHP warnings/HTML breaking JSON
+ini_set("display_errors", "0");
+
 require_once __DIR__ . "/../php/auth.php";
-$u = require_login(["Admin","Owner"]);
+require_once __DIR__ . "/../php/db.php";
+
+/**
+ * API MODE (same file)
+ * If action is set, return JSON and EXIT (no HTML)
+ */
+$action = (string)($_GET["action"] ?? "");
+
+if ($action !== "") {
+    // ✅ API auth (NO redirects). Must be case-insensitive roles.
+    $u = require_login_api(["admin", "owner"]);
+
+    function j(array $arr, int $code = 200): void {
+        http_response_code($code);
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode($arr);
+        exit; // ✅ MUST EXIT
+    }
+
+    if ($action === "list") {
+        $from  = trim((string)($_GET["from"] ?? ""));
+        $to    = trim((string)($_GET["to"] ?? ""));
+        $level = strtoupper(trim((string)($_GET["level"] ?? "ALL")));
+        $q     = trim((string)($_GET["q"] ?? ""));
+        $limit = (int)($_GET["limit"] ?? 200);
+        if ($limit <= 0 || $limit > 1000) $limit = 200;
+
+        $where = [];
+        $params = [];
+
+        // ✅ use alias sl.
+        if ($from !== "") { $where[] = "sl.created_at >= :from"; $params[":from"] = $from . " 00:00:00"; }
+        if ($to !== "")   { $where[] = "sl.created_at <= :to";   $params[":to"]   = $to   . " 23:59:59"; }
+
+        if ($level !== "" && $level !== "ALL") {
+            $where[] = "sl.level = :lvl";
+            $params[":lvl"] = $level;
+        }
+
+        if ($q !== "") {
+            // ✅ username/full_name come from users table via LEFT JOIN
+            $where[] = "(
+                CAST(sl.log_id AS CHAR) LIKE :q
+                OR sl.message LIKE :q
+                OR sl.ip_address LIKE :q
+                OR u.username LIKE :q
+                OR u.full_name LIKE :q
+            )";
+            $params[":q"] = "%" . $q . "%";
+        }
+
+        $whereSql = $where ? ("WHERE " . implode(" AND ", $where)) : "";
+
+        // ✅ FIXED: system_logs doesn't have username/full_name -> join users
+        $sql = "
+            SELECT
+                sl.log_id,
+                sl.created_at,
+                sl.level,
+                sl.module,
+                sl.message,
+                u.username,
+                u.full_name,
+                sl.user_id,
+                sl.ip_address
+            FROM system_logs sl
+            LEFT JOIN users u ON u.user_id = sl.user_id
+            $whereSql
+            ORDER BY sl.created_at DESC
+            LIMIT $limit
+        ";
+
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            j(["ok" => true, "rows" => $rows]);
+        } catch (Throwable $e) {
+            j(["ok" => false, "error" => "DB_ERROR", "detail" => $e->getMessage()], 500);
+        }
+    }
+
+    j(["ok" => false, "error" => "INVALID_ACTION"], 400);
+}
+
+/**
+ * NORMAL PAGE MODE (HTML)
+ */
+$u = require_login(["Admin", "Owner"]);
 
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
@@ -111,7 +202,8 @@ $displayName = trim((string)(
                     <input type="text" id="logSearch" placeholder="Search Log ID or User...">
                 </div>
 
-                <button id="btnPDF" class="btn btn-primary" style="padding: 10px 15px;" onclick="window.open('../php/generate_pdf.php', '_blank')">
+                <!-- ✅ NO onclick here -->
+                <button id="btnPDF" class="btn btn-primary" style="padding: 10px 15px;">
                     <i class="fa-solid fa-file-pdf"></i> PDF Report
                 </button>
             </div>
@@ -138,7 +230,7 @@ $displayName = trim((string)(
     </main>
 </div>
 
-<script src="../js/system_logs.js?v=2"></script>
+<script src="../js/system_logs.js?v=3"></script>
 <script src="../js/dashboard.js"></script>
 </body>
 </html>

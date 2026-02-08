@@ -5,7 +5,7 @@
   const dateTo = document.getElementById("dateTo");
   const levelFilter = document.getElementById("levelFilter");
   const logSearch = document.getElementById("logSearch");
-  const btnExport = document.getElementById("btnExportCSV");
+  const btnPDF = document.getElementById("btnPDF");
 
   let debounceTimer = null;
 
@@ -26,14 +26,11 @@
     else if (v === "ERROR") cls += " badge-danger";
     else cls += " badge-secondary";
 
-    // If your CSS doesn't have these badge classes, it will still show plain text.
     return `<span class="${cls}" style="padding:4px 10px;border-radius:999px;font-size:0.8rem;">${esc(v)}</span>`;
   }
 
   function formatTs(ts) {
-    // MySQL timestamp string -> nicer
     if (!ts) return "-";
-    // keep it simple to avoid timezone confusion
     return esc(String(ts).replace("T", " ").replace(".000Z", ""));
   }
 
@@ -48,7 +45,6 @@
     if (logSearch?.value && logSearch.value.trim())
       params.set("q", logSearch.value.trim());
 
-    // only for list
     if (action === "list") params.set("limit", "200");
     return params;
   }
@@ -61,21 +57,22 @@
     const params = buildParams("list");
 
     try {
-      const res = await fetch(
-        `../php/system_logs_api.php?${params.toString()}`,
-        {
-          credentials: "include", // ✅ safer for PHP sessions than same-origin
-          headers: { Accept: "application/json" },
-        },
-      );
+      // ✅ API is SAME FILE (html/system_logs.php)
+      const res = await fetch(`system_logs.php?${params.toString()}`, {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      });
 
-      // If PHP redirects to login, res might be HTML. This catches it cleanly.
       const text = await res.text();
+
       let data;
       try {
         data = JSON.parse(text);
       } catch {
-        body.innerHTML = `<tr><td colspan="6" style="color:#ffb4b4;">API returned non-JSON (probably redirect / PHP error).</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" style="color:#ffb4b4;">
+          API returned non-JSON (redirect / PHP error).<br>
+          <small>Open DevTools → Network → Response to see what came back.</small>
+        </td></tr>`;
         return;
       }
 
@@ -99,6 +96,7 @@
             r.username ||
             (r.user_id ? "User #" + r.user_id : "System");
           const ip = r.ip_address || "-";
+
           return `
             <tr>
               <td>${formatTs(r.created_at)}</td>
@@ -122,16 +120,31 @@
     debounceTimer = setTimeout(loadLogs, 250);
   }
 
+  function download(url) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   // Events
   dateFrom?.addEventListener("change", loadLogs);
   dateTo?.addEventListener("change", loadLogs);
   levelFilter?.addEventListener("change", loadLogs);
   logSearch?.addEventListener("input", debouncedLoad);
 
-  // ✅ Export CSV (same behavior as uploaded file)
-  btnExport?.addEventListener("click", () => {
-    const params = buildParams("csv");
-    window.location.href = `../php/system_logs_api.php?${params.toString()}`;
+  // ✅ PDF download without leaving page
+  btnPDF?.addEventListener("click", () => {
+    const p = new URLSearchParams();
+    if (dateFrom?.value) p.set("from", dateFrom.value);
+    if (dateTo?.value) p.set("to", dateTo.value);
+    if (levelFilter?.value && levelFilter.value !== "ALL")
+      p.set("level", levelFilter.value);
+    if (logSearch?.value && logSearch.value.trim())
+      p.set("q", logSearch.value.trim());
+    download(`../php/generate_pdf.php?${p.toString()}`);
   });
 
   // First load
