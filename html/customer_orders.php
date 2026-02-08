@@ -90,7 +90,7 @@ function money(float $v): string { return number_format($v, 2, ".", ","); }
             </a>
           </li>
           <li class="nav-item">
-            <a href="customer_invoices.html" class="nav-link">
+            <a href="customer_invoices.php" class="nav-link">
               <i class="fa-solid fa-file-invoice"></i> Invoices
             </a>
           </li>

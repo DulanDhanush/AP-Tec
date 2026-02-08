@@ -1,3 +1,14 @@
+<?php
+require_once __DIR__ . "/../php/auth.php";
+require_once __DIR__ . "/../php/db.php";
+
+$u = require_login("customer");
+
+// fetch avatar fields (your auth.php doesn't select them)
+$st = $pdo->prepare("SELECT avatar_initials, avatar_color FROM users WHERE user_id=? LIMIT 1");
+$st->execute([(int)$u["user_id"]]);
+$av = $st->fetch(PDO::FETCH_ASSOC) ?: ["avatar_initials" => "U", "avatar_color" => "#0d2c4d"];
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -15,33 +26,39 @@
     />
     <link rel="stylesheet" href="../css/style.css" />
   </head>
+
   <body>
     <div class="dashboard-container">
       <aside class="sidebar">
         <div class="sidebar-brand">
           <i class="fa-solid fa-layer-group"></i> AP TEC.
         </div>
+
         <ul class="nav-menu">
           <li class="nav-item">
             <a href="customer_dashboard.php" class="nav-link">
               <i class="fa-solid fa-gauge-high"></i> Dashboard
             </a>
           </li>
+
           <li class="nav-item">
-            <a href="customer_orders.html" class="nav-link">
+            <a href="customer_orders.php" class="nav-link">
               <i class="fa-solid fa-box-open"></i> My Orders
             </a>
           </li>
+
           <li class="nav-item">
-            <a href="customer_invoices.html" class="nav-link active">
+            <a href="customer_invoices.php" class="nav-link active">
               <i class="fa-solid fa-file-invoice-dollar"></i> Invoices
             </a>
           </li>
+
           <li class="nav-item">
             <a href="customer_support.html" class="nav-link">
               <i class="fa-solid fa-headset"></i> Support
             </a>
           </li>
+
           <li class="nav-item" style="margin-top: auto">
             <a
               href="../index.html"
@@ -62,16 +79,23 @@
               View billing history and settle outstanding invoices.
             </p>
           </div>
+
+          <!-- ✅ FIXED: properly closed user-profile div -->
           <div class="user-profile">
-            <span>Alpha Corp</span>
-            <div class="user-avatar" style="background: #8e44ad">AC</div>
+            <span><?= htmlspecialchars((string)$u["full_name"]) ?></span>
+            <div
+              class="user-avatar"
+              style="background: <?= htmlspecialchars((string)$av["avatar_color"]) ?>"
+            >
+              <?= htmlspecialchars((string)$av["avatar_initials"]) ?>
+            </div>
           </div>
         </header>
 
         <div class="dashboard-grid">
           <div class="stat-card" style="border-left: 4px solid #e74c3c">
             <div class="stat-info">
-              <h3 style="color: #e74c3c">$450.00</h3>
+              <h3 id="statOutstanding" style="color: #e74c3c">0.00</h3>
               <p>Total Outstanding</p>
             </div>
             <div class="stat-icon" style="color: #e74c3c">
@@ -81,15 +105,17 @@
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3 style="color: #64ffda">$1,200.00</h3>
+              <h3 id="statPaidYtd" style="color: #64ffda">0.00</h3>
               <p>Total Paid (YTD)</p>
             </div>
-            <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="stat-icon">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
           </div>
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3>Feb 01</h3>
+              <h3 id="statLastPaid">—</h3>
               <p>Last Payment Date</p>
             </div>
             <div class="stat-icon">
@@ -99,10 +125,12 @@
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3>1</h3>
+              <h3 id="statOverdue">0</h3>
               <p>Invoice Overdue</p>
             </div>
-            <div class="stat-icon"><i class="fa-solid fa-bell"></i></div>
+            <div class="stat-icon">
+              <i class="fa-solid fa-bell"></i>
+            </div>
           </div>
 
           <div class="wide-widget" style="grid-column: span 4; height: auto">
@@ -125,69 +153,10 @@
                   <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr class="invoice-row" data-status="Unpaid">
-                  <td class="font-mono">INV-2026-009</td>
-                  <td>Feb 06, 2026</td>
-                  <td>Feb 20, 2026</td>
-                  <td style="color: white; font-weight: 600">$450.00</td>
-                  <td>
-                    <span class="status-badge status-unpaid">Unpaid</span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        class="btn btn-primary btn-pay-now"
-                        style="padding: 5px 15px; font-size: 0.8rem"
-                      >
-                        Pay Now
-                      </button>
-                      <button class="btn-icon btn-view" title="Download PDF">
-                        <i class="fa-solid fa-download"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
 
-                <tr class="invoice-row" data-status="Paid">
-                  <td class="font-mono">INV-2026-004</td>
-                  <td>Jan 15, 2026</td>
-                  <td>Jan 30, 2026</td>
-                  <td style="color: white; font-weight: 600">$120.00</td>
-                  <td><span class="status-badge status-paid">Paid</span></td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn-icon btn-view" title="Download PDF">
-                        <i class="fa-solid fa-download"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr class="invoice-row" data-status="Overdue">
-                  <td class="font-mono">INV-2025-998</td>
-                  <td>Dec 01, 2025</td>
-                  <td style="color: #e74c3c; font-weight: bold">
-                    Dec 15, 2025
-                  </td>
-                  <td style="color: white; font-weight: 600">$85.00</td>
-                  <td>
-                    <span class="status-badge status-unpaid">Overdue</span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        class="btn btn-primary btn-pay-now"
-                        style="padding: 5px 15px; font-size: 0.8rem"
-                      >
-                        Pay Now
-                      </button>
-                      <button class="btn-icon btn-view" title="Download PDF">
-                        <i class="fa-solid fa-download"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+              <!-- ✅ IMPORTANT: id must be invoiceTbody -->
+              <tbody id="invoiceTbody">
+                <!-- JS will render -->
               </tbody>
             </table>
           </div>
@@ -214,7 +183,7 @@
 
         <div style="text-align: center; margin-bottom: 20px">
           <h1 id="modalAmount" style="color: white; font-size: 2.5rem">
-            $0.00
+            0.00
           </h1>
         </div>
 
@@ -222,17 +191,24 @@
           <div class="cc-chip"></div>
           <div class="cc-number">•••• •••• •••• 4242</div>
           <div class="cc-meta">
-            <span>Alpha Corp</span>
+            <span><?= htmlspecialchars((string)$u["full_name"]) ?></span>
             <span>EXP 12/28</span>
           </div>
         </div>
 
         <form id="paymentForm">
+          <input type="hidden" id="modalInvoiceId" value="" />
+
           <div class="form-group">
             <label class="form-label" style="color: var(--secondary)"
               >Cardholder Name</label
             >
-            <input type="text" class="modal-input" value="Alpha Corp HQ" />
+            <input
+              id="cardholder"
+              type="text"
+              class="modal-input"
+              value="<?= htmlspecialchars((string)$u["full_name"]) ?>"
+            />
           </div>
 
           <div style="display: flex; gap: 15px">
@@ -241,16 +217,23 @@
                 >Card Number</label
               >
               <input
+                id="cardNumber"
                 type="text"
                 class="modal-input"
                 placeholder="0000 0000 0000 0000"
               />
             </div>
+
             <div class="form-group" style="flex: 1">
               <label class="form-label" style="color: var(--secondary)"
                 >CVC</label
               >
-              <input type="text" class="modal-input" placeholder="123" />
+              <input
+                id="cvc"
+                type="text"
+                class="modal-input"
+                placeholder="123"
+              />
             </div>
           </div>
 
