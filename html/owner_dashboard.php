@@ -92,13 +92,17 @@
               "
             ></div>
 
-            <div style="color: var(--secondary); font-size: 0.9rem">
-              <i class="fa-regular fa-calendar"></i> Feb 2026
+            <!-- ✅ Real range label -->
+            <div
+              id="rangeLabel"
+              style="color: var(--secondary); font-size: 0.9rem"
+            >
+              <i class="fa-regular fa-calendar"></i> Loading...
             </div>
           </div>
 
           <div class="action-buttons">
-            <button class="btn btn-primary">
+            <button id="btnReport" class="btn btn-primary">
               <i class="fa-solid fa-file-pdf"></i> Generate Report
             </button>
           </div>
@@ -107,10 +111,11 @@
         <div class="dashboard-grid">
           <div class="stat-card">
             <div class="stat-info">
-              <h3 style="color: #64ffda">$124,500</h3>
+              <!-- ✅ Real Revenue -->
+              <h3 id="kpiRevenue" style="color: #64ffda">0.00</h3>
               <p>Total Revenue (YTD)</p>
               <span style="font-size: 0.8rem; color: #2ecc71">
-                <i class="fa-solid fa-arrow-trend-up"></i> +12% vs last month
+                <i class="fa-solid fa-arrow-trend-up"></i> Live from database
               </span>
             </div>
             <div class="stat-icon"><i class="fa-solid fa-sack-dollar"></i></div>
@@ -118,10 +123,11 @@
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3 style="color: #f1c40f">$42,800</h3>
+              <!-- ✅ Real Profit -->
+              <h3 id="kpiProfit" style="color: #f1c40f">0.00</h3>
               <p>Net Profit</p>
               <span style="font-size: 0.8rem; color: #2ecc71">
-                <i class="fa-solid fa-arrow-trend-up"></i> +5% vs target
+                <i class="fa-solid fa-arrow-trend-up"></i> Live from database
               </span>
             </div>
             <div class="stat-icon"><i class="fa-solid fa-chart-pie"></i></div>
@@ -129,11 +135,15 @@
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3 style="color: #e74c3c">$5,200</h3>
+              <!-- ✅ Real Outstanding -->
+              <h3 id="kpiOutstanding" style="color: #e74c3c">0.00</h3>
               <p>Outstanding Invoices</p>
-              <span style="font-size: 0.8rem; color: #e74c3c">
-                3 Invoices Overdue
-              </span>
+              <!-- ✅ Real overdue count -->
+              <span
+                id="kpiOverdueText"
+                style="font-size: 0.8rem; color: #e74c3c"
+                >0 Invoices Overdue</span
+              >
             </div>
             <div class="stat-icon">
               <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -142,7 +152,8 @@
 
           <div class="stat-card">
             <div class="stat-info">
-              <h3>18</h3>
+              <!-- ✅ Real contracts -->
+              <h3 id="kpiContracts">0</h3>
               <p>Active Supplier Contracts</p>
             </div>
             <div class="stat-icon"><i class="fa-solid fa-handshake"></i></div>
@@ -162,7 +173,7 @@
               "
             >
               <h3 style="color: white">Revenue Analytics</h3>
-              <button class="btn-icon btn-view">
+              <button class="btn-icon btn-view" type="button">
                 <i class="fa-solid fa-expand"></i>
               </button>
             </div>
@@ -181,7 +192,7 @@
             </div>
             <div style="margin-top: 20px; text-align: center">
               <p style="color: var(--secondary); font-size: 0.85rem">
-                Most profitable: <b>Toner Refill</b>
+                Most profitable: <b id="mostProfitable">Loading...</b>
               </p>
             </div>
           </div>
@@ -202,30 +213,9 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="font-mono">TRX-9920</td>
-                <td>Feb 06, 2026</td>
-                <td>Alpha Corp Ltd</td>
-                <td>Service Payment</td>
-                <td style="color: #64ffda">+$1,200.00</td>
-                <td>
-                  <span class="status-badge status-active">Completed</span>
-                </td>
-              </tr>
-              <tr>
-                <td class="font-mono">INV-8821</td>
-                <td>Feb 05, 2026</td>
-                <td>HP Supplies Inc.</td>
-                <td>Inventory Purchase</td>
-                <td style="color: #e74c3c">-$4,500.00</td>
-                <td>
-                  <span class="status-badge status-pending"
-                    >Pending Approval</span
-                  >
-                </td>
-              </tr>
-            </tbody>
+
+            <!-- ✅ Real rows inserted here -->
+            <tbody id="trxBody"></tbody>
           </table>
         </div>
       </main>
