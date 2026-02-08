@@ -54,7 +54,7 @@ $av = $st->fetch(PDO::FETCH_ASSOC) ?: ["avatar_initials" => "U", "avatar_color" 
           </li>
 
           <li class="nav-item">
-            <a href="customer_support.html" class="nav-link">
+            <a href="customer_support.php" class="nav-link">
               <i class="fa-solid fa-headset"></i> Support
             </a>
           </li>

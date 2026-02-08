@@ -95,7 +95,7 @@ function money(float $v): string { return number_format($v, 2, ".", ","); }
             </a>
           </li>
           <li class="nav-item">
-            <a href="customer_support.html" class="nav-link">
+            <a href="customer_support.php" class="nav-link">
               <i class="fa-solid fa-headset"></i> Support
             </a>
           </li>

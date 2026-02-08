@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (empty($_SESSION["user_id"])) {
+  header("Location: customer_login.php"); // change to your login page
+  exit;
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -93,7 +100,7 @@
             >
           </li>
           <li class="nav-item">
-            <a href="customer_support.html" class="nav-link active"
+            <a href="customer_support.php" class="nav-link active"
               ><i class="fa-solid fa-headset"></i> Support</a
             >
           </li>
