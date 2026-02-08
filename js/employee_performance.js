@@ -184,8 +184,7 @@ function bindExport() {
   if (!btn) return;
 
   btn.addEventListener("click", () => {
-    window.location.href =
-      "../php/employee_performance_api.php?action=export_csv";
+    window.location.href = "../php/employee_performance_report.php";
   });
 }
 
