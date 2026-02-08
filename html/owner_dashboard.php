@@ -25,7 +25,7 @@
 
         <ul class="nav-menu">
           <li class="nav-item">
-            <a href="owner_dashboard.html" class="nav-link active">
+            <a href="owner_dashboard.php" class="nav-link active">
               <i class="fa-solid fa-chart-line"></i> BI Reports
             </a>
           </li>
