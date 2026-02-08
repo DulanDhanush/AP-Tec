@@ -1,3 +1,60 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . "/../php/auth.php";
+require_once __DIR__ . "/../php/db.php";
+
+$u = require_login(["customer"]);
+
+function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, "UTF-8"); }
+
+$customerId = (int)($u["user_id"] ?? 0);
+
+// get customer display/avatars
+$userStmt = $pdo->prepare("SELECT full_name, avatar_initials, avatar_color FROM users WHERE user_id = :id LIMIT 1");
+$userStmt->execute([":id" => $customerId]);
+$userRow = $userStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+$displayName = (string)($userRow["full_name"] ?? $u["full_name"] ?? $u["username"] ?? "Customer");
+$avatarInit  = (string)($userRow["avatar_initials"] ?? "U");
+$avatarColor = (string)($userRow["avatar_color"] ?? "#0d2c4d");
+
+function badge_class(string $status): string {
+  $s = strtolower($status);
+  return match ($s) {
+    "shipped" => "status-shipped",
+    "processing" => "status-processing",
+    "delivered" => "status-delivered",
+    "cancelled" => "status-inactive",
+    "pending" => "status-pending",
+    default => "status-pending",
+  };
+}
+
+// list orders with 1-line items summary
+$ordersStmt = $pdo->prepare("
+  SELECT 
+    o.order_id,
+    o.order_reference,
+    o.order_date,
+    o.total_amount,
+    o.status,
+    o.tracking_step,
+    COALESCE((
+      SELECT GROUP_CONCAT(CONCAT(i.item_name, ' (x', oi.quantity, ')') SEPARATOR ', ')
+      FROM order_items oi
+      JOIN inventory i ON i.item_id = oi.item_id
+      WHERE oi.order_id = o.order_id
+    ), 'Order') AS items_summary
+  FROM orders o
+  WHERE o.customer_id = :cid
+  ORDER BY o.order_date DESC
+");
+$ordersStmt->execute([":cid" => $customerId]);
+$orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
+
+function money(float $v): string { return number_format($v, 2, ".", ","); }
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -28,7 +85,7 @@
             </a>
           </li>
           <li class="nav-item">
-            <a href="customer_orders.html" class="nav-link active">
+            <a href="customer_orders.php" class="nav-link active">
               <i class="fa-solid fa-box-open"></i> My Orders
             </a>
           </li>
@@ -63,8 +120,8 @@
             </p>
           </div>
           <div class="user-profile">
-            <span>Alpha Corp</span>
-            <div class="user-avatar" style="background: #8e44ad">AC</div>
+            <span><?= h($displayName) ?></span>
+            <div class="user-avatar" style="background: <?= h($avatarColor) ?>"><?= h($avatarInit) ?></div>
           </div>
         </header>
 
@@ -90,74 +147,44 @@
                   <th>Items</th>
                   <th>Total</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  
                 </tr>
               </thead>
               <tbody>
-                <tr class="order-row" data-status="Shipped">
-                  <td class="font-mono">#ORD-2026-005</td>
-                  <td>Feb 06, 2026</td>
-                  <td>HP 85A Toner (x5), Paper (x10)</td>
-                  <td style="color: white; font-weight: 600">$450.00</td>
-                  <td>
-                    <span class="status-badge status-shipped">Shipped</span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button
-                        class="btn-icon btn-view btn-view-order"
-                        title="Track Order"
-                      >
-                        <i class="fa-solid fa-location-arrow"></i>
-                      </button>
-                      <button class="btn-icon btn-view" title="Invoice">
-                        <i class="fa-solid fa-file-invoice"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <?php if (!$orders): ?>
+                  <tr>
+                    <td colspan="6" style="color: var(--secondary); padding: 16px;">
+                      No orders found.
+                    </td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($orders as $o): ?>
+                    <?php
+                      $orderId = (int)$o["order_id"];
+                      $ref = (string)($o["order_reference"] ?? ("ORD-" . $orderId));
+                      $status = (string)$o["status"];
+                      $items = (string)$o["items_summary"];
+                      $dateLabel = date("M d, Y", strtotime((string)$o["order_date"]));
+                      $total = (float)$o["total_amount"];
+                      $badge = badge_class($status);
+                    ?>
+                    <tr class="order-row" data-status="<?= h($status) ?>" data-order-id="<?= $orderId ?>">
+                      <td class="font-mono">#<?= h($ref) ?></td>
+                      <td><?= h($dateLabel) ?></td>
+                      <td><?= h($items) ?></td>
+                      <td style="color: white; font-weight: 600">$<?= h(money($total)) ?></td>
+                      <td>
+                        <span class="status-badge <?= h($badge) ?>"><?= h($status) ?></span>
+                      </td>
+                      <td>
+                        <div class="action-buttons">
+                        
 
-                <tr class="order-row" data-status="Processing">
-                  <td class="font-mono">#ORD-2026-006</td>
-                  <td>Feb 07, 2026</td>
-                  <td>Canon Drum Unit (x2)</td>
-                  <td style="color: white; font-weight: 600">$120.00</td>
-                  <td>
-                    <span class="status-badge status-processing"
-                      >Processing</span
-                    >
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn-icon btn-view btn-view-order">
-                        <i class="fa-solid fa-eye"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr class="order-row" data-status="Delivered">
-                  <td class="font-mono">#ORD-2025-890</td>
-                  <td>Dec 15, 2025</td>
-                  <td>Office Printer Repair Kit</td>
-                  <td style="color: white; font-weight: 600">$85.00</td>
-                  <td>
-                    <span class="status-badge status-delivered">Delivered</span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn-icon btn-view btn-view-order">
-                        <i class="fa-solid fa-eye"></i>
-                      </button>
-                      <button
-                        class="btn-icon btn-edit btn-reorder"
-                        title="Reorder"
-                      >
-                        <i class="fa-solid fa-rotate-right"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -199,26 +226,26 @@
           <div
             id="modalTrackBar"
             class="track-progress-bar"
-            style="width: 66%"
+            style="width: 0%"
           ></div>
 
-          <div class="step-item completed">
+          <div class="step-item" id="step1">
             <div class="step-circle">
               <i class="fa-solid fa-clipboard-check"></i>
             </div>
             <div class="step-text">Confirmed</div>
           </div>
-          <div class="step-item active">
+          <div class="step-item" id="step2">
             <div class="step-circle"><i class="fa-solid fa-box"></i></div>
             <div class="step-text">Processing</div>
           </div>
-          <div class="step-item">
+          <div class="step-item" id="step3">
             <div class="step-circle">
               <i class="fa-solid fa-truck-fast"></i>
             </div>
             <div class="step-text">Shipped</div>
           </div>
-          <div class="step-item">
+          <div class="step-item" id="step4">
             <div class="step-circle"><i class="fa-solid fa-check"></i></div>
             <div class="step-text">Delivered</div>
           </div>
@@ -235,42 +262,8 @@
           Items Ordered
         </h4>
 
-        <div class="order-items-list">
-          <div class="order-item-row">
-            <div style="display: flex; gap: 15px; align-items: center">
-              <div class="item-thumb"><i class="fa-solid fa-print"></i></div>
-              <div>
-                <div style="color: white; font-weight: 600">
-                  HP 85A Black Toner Cartridge
-                </div>
-                <div style="color: var(--secondary); font-size: 0.8rem">
-                  Supplies
-                </div>
-              </div>
-            </div>
-            <div style="text-align: right">
-              <div style="color: white">x5</div>
-              <div style="color: var(--primary); font-size: 0.9rem">$75.00</div>
-            </div>
-          </div>
-
-          <div class="order-item-row">
-            <div style="display: flex; gap: 15px; align-items: center">
-              <div class="item-thumb"><i class="fa-solid fa-scroll"></i></div>
-              <div>
-                <div style="color: white; font-weight: 600">
-                  A4 Paper Ream (500 Sheets)
-                </div>
-                <div style="color: var(--secondary); font-size: 0.8rem">
-                  Supplies
-                </div>
-              </div>
-            </div>
-            <div style="text-align: right">
-              <div style="color: white">x10</div>
-              <div style="color: var(--primary); font-size: 0.9rem">$7.50</div>
-            </div>
-          </div>
+        <div class="order-items-list" id="modalItems">
+          <!-- JS fills items -->
         </div>
 
         <div
@@ -285,9 +278,9 @@
             <p style="color: var(--secondary); font-size: 0.9rem">
               Total Amount
             </p>
-            <h2 style="color: white">$450.00</h2>
+            <h2 id="modalTotal" style="color: white">0.00</h2>
           </div>
-          <button class="btn btn-primary">
+          <button class="btn btn-primary" id="btnDownloadInvoice">
             <i class="fa-solid fa-download"></i> Download Invoice
           </button>
         </div>
