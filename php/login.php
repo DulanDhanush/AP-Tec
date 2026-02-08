@@ -54,21 +54,21 @@ $_SESSION["username"]   = (string)$user["username"];
 $_SESSION["full_name"]  = (string)$user["full_name"];  // ✅ store with clear key
 $_SESSION["role"] = (string)$user["role"]; // Admin / Owner / Employee / Customer
 
-$role = $_SESSION["role"];
+$_SESSION["role"] = (string)$user["role"]; // Admin / Owner / Employee / Customer
 
-// ✅ redirect
+$role = strtolower(trim($_SESSION["role"])); // ✅ normalize
+
 switch ($role) {
     case "admin":
         header("Location: ../html/admin_dashboard.php");
-        break;
+        exit;
     case "owner":
         header("Location: ../html/owner_dashboard.php");
-        break;
+        exit;
     case "employee":
         header("Location: ../html/employee_dashboard.php");
-        break;
+        exit;
     default:
         header("Location: ../html/customer_dashboard.php");
-        break;
+        exit;
 }
-exit;
