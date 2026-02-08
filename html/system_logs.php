@@ -55,7 +55,7 @@ $displayName = trim((string)(
                 </a>
             </li>
             <li class="nav-item">
-                <a href="backup_data.html" class="nav-link">
+                <a href="backup_data.php" class="nav-link">
                     <i class="fa-solid fa-database"></i> Backup / Data
                 </a>
             </li>

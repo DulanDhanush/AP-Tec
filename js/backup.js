@@ -4,6 +4,11 @@
   const btnRestore = document.getElementById("btnRestore");
   const fileRestore = document.getElementById("fileRestore");
   const uploadZone = document.querySelector(".upload-zone");
+
+  const lastBackupText = document.getElementById("lastBackupText");
+  const backupStatus = document.getElementById("backupStatus");
+  const tableBody = document.querySelector("table.table-responsive tbody");
+
   // --- show selected filename in the square ---
   function updateUploadZoneLabel(file) {
     if (!uploadZone) return;
@@ -12,44 +17,36 @@
     const sub = uploadZone.querySelector("p");
 
     if (file) {
-      title.textContent = "Selected File";
-      sub.textContent = file.name;
+      if (title) title.textContent = "Selected File";
+      if (sub) sub.textContent = file.name;
     } else {
-      title.textContent = "Click to Upload";
-      sub.textContent = "or drag and drop .sql files here";
+      if (title) title.textContent = "Click to Upload";
+      if (sub) sub.textContent = "or drag and drop .sql files here";
     }
   }
 
+  // Upload zone logic (single clean block)
   if (uploadZone && fileRestore) {
-    // click => open file dialog
     uploadZone.addEventListener("click", () => fileRestore.click());
 
-    // when user chooses a file from dialog
     fileRestore.addEventListener("change", () => {
       const file = fileRestore.files && fileRestore.files[0];
       updateUploadZoneLabel(file);
     });
 
-    // dragover highlight (optional)
     uploadZone.addEventListener("dragover", (e) => {
       e.preventDefault();
     });
 
-    // drop file
     uploadZone.addEventListener("drop", (e) => {
       e.preventDefault();
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       if (file) {
-        fileRestore.files = e.dataTransfer.files; // set into input
-        updateUploadZoneLabel(file); // show name in square
+        fileRestore.files = e.dataTransfer.files;
+        updateUploadZoneLabel(file);
       }
     });
   }
-
-  const lastBackupText = document.getElementById("lastBackupText");
-  const backupStatus = document.getElementById("backupStatus");
-
-  const tableBody = document.querySelector("table.table-responsive tbody");
 
   function fmtBytes(bytes) {
     const b = Number(bytes || 0);
@@ -63,7 +60,6 @@
   }
 
   function toUiDate(mysqlDateTime) {
-    // expects "YYYY-MM-DD HH:MM:SS"
     if (!mysqlDateTime) return "—";
     const d = new Date(mysqlDateTime.replace(" ", "T"));
     if (isNaN(d.getTime())) return mysqlDateTime;
@@ -77,13 +73,9 @@
   }
 
   async function apiGet(action) {
-    const res = await fetch(
-      `../php/backup_api.php?action=${encodeURIComponent(action)}`,
-      {
-        credentials: "include",
-      },
-    );
-    return res;
+    return fetch(`../php/backup_api.php?action=${encodeURIComponent(action)}`, {
+      credentials: "include",
+    });
   }
 
   async function apiPost(action, formDataOrObject) {
@@ -97,23 +89,18 @@
       headers = { "Content-Type": "application/x-www-form-urlencoded" };
     }
 
-    const res = await fetch(
-      `../php/backup_api.php?action=${encodeURIComponent(action)}`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body,
-      },
-    );
-    return res;
+    return fetch(`../php/backup_api.php?action=${encodeURIComponent(action)}`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body,
+    });
   }
 
   function setStatus(text, ok = true) {
     if (!backupStatus) return;
     backupStatus.textContent = text;
-    backupStatus.classList.remove("status-active");
-    backupStatus.classList.remove("status-danger");
+    backupStatus.classList.remove("status-active", "status-danger");
     backupStatus.classList.add(ok ? "status-active" : "status-danger");
   }
 
@@ -156,7 +143,6 @@
     tableBody.querySelectorAll("[data-download]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-download");
-        // streams file
         window.location.href = `../php/backup_api.php?action=download&id=${encodeURIComponent(id)}`;
       });
     });
@@ -216,23 +202,6 @@
 
       alert(data.message || "Backup completed");
       await refresh();
-    });
-  }
-
-  // Upload zone click => open file dialog
-  if (uploadZone && fileRestore) {
-    uploadZone.addEventListener("click", () => fileRestore.click());
-
-    uploadZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-    });
-
-    uploadZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (file) {
-        fileRestore.files = e.dataTransfer.files;
-      }
     });
   }
 

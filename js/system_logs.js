@@ -34,26 +34,37 @@
     // MySQL timestamp string -> nicer
     if (!ts) return "-";
     // keep it simple to avoid timezone confusion
-    return esc(ts.replace("T", " ").replace(".000Z", ""));
+    return esc(String(ts).replace("T", " ").replace(".000Z", ""));
+  }
+
+  function buildParams(action) {
+    const params = new URLSearchParams();
+    params.set("action", action);
+
+    if (dateFrom?.value) params.set("from", dateFrom.value);
+    if (dateTo?.value) params.set("to", dateTo.value);
+    if (levelFilter?.value && levelFilter.value !== "ALL")
+      params.set("level", levelFilter.value);
+    if (logSearch?.value && logSearch.value.trim())
+      params.set("q", logSearch.value.trim());
+
+    // only for list
+    if (action === "list") params.set("limit", "200");
+    return params;
   }
 
   async function loadLogs() {
+    if (!body) return;
+
     body.innerHTML = `<tr><td colspan="6" style="color:#ccc;">Loading logs...</td></tr>`;
 
-    const params = new URLSearchParams();
-    params.set("action", "list");
-    if (dateFrom.value) params.set("from", dateFrom.value);
-    if (dateTo.value) params.set("to", dateTo.value);
-    if (levelFilter.value && levelFilter.value !== "ALL")
-      params.set("level", levelFilter.value);
-    if (logSearch.value.trim()) params.set("q", logSearch.value.trim());
-    params.set("limit", "200");
+    const params = buildParams("list");
 
     try {
       const res = await fetch(
         `../php/system_logs_api.php?${params.toString()}`,
         {
-          credentials: "same-origin",
+          credentials: "include", // ✅ safer for PHP sessions than same-origin
           headers: { Accept: "application/json" },
         },
       );
@@ -69,7 +80,9 @@
       }
 
       if (!res.ok || !data.ok) {
-        body.innerHTML = `<tr><td colspan="6" style="color:#ffb4b4;">${esc(data.error || "API error loading logs.")}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" style="color:#ffb4b4;">${esc(
+          data.error || "API error loading logs.",
+        )}</td></tr>`;
         return;
       }
 
@@ -87,15 +100,15 @@
             (r.user_id ? "User #" + r.user_id : "System");
           const ip = r.ip_address || "-";
           return `
-          <tr>
-            <td>${formatTs(r.created_at)}</td>
-            <td>${levelBadge(r.level)}</td>
-            <td>${esc(r.module || "-")}</td>
-            <td>${esc(r.message || "-")}</td>
-            <td>${esc(user)}<br><span style="color:var(--secondary);font-size:0.8rem;">${esc(ip)}</span></td>
-            <td style="color:#aaa;">-</td>
-          </tr>
-        `;
+            <tr>
+              <td>${formatTs(r.created_at)}</td>
+              <td>${levelBadge(r.level)}</td>
+              <td>${esc(r.module || "-")}</td>
+              <td>${esc(r.message || "-")}</td>
+              <td>${esc(user)}<br><span style="color:var(--secondary);font-size:0.8rem;">${esc(ip)}</span></td>
+              <td style="color:#aaa;">-</td>
+            </tr>
+          `;
         })
         .join("");
     } catch (err) {
@@ -115,9 +128,10 @@
   levelFilter?.addEventListener("change", loadLogs);
   logSearch?.addEventListener("input", debouncedLoad);
 
-  // Export CSV not required
+  // ✅ Export CSV (same behavior as uploaded file)
   btnExport?.addEventListener("click", () => {
-    alert("Export CSV is not implemented yet (coming soon).");
+    const params = buildParams("csv");
+    window.location.href = `../php/system_logs_api.php?${params.toString()}`;
   });
 
   // First load
