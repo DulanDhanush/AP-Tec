@@ -45,11 +45,8 @@ $u = require_login(["Employee"]);
           <li class="nav-item">
             <a href="messages.php" class="nav-link">
               <i class="fa-solid fa-comments"></i> Messages
-              <span
-                class="tab-badge"
-                style="background: var(--primary); color: black"
-                >2</span
-              >
+             <span id="msgBadge" class="tab-badge" style="background:var(--primary); color:black; display:none;">0</span>
+              
             </a>
           </li>
           <li class="nav-item" style="margin-top: auto">
