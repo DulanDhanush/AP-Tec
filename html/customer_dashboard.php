@@ -1,160 +1,196 @@
-<?php
-// php/customer_dashboard_api.php
-declare(strict_types=1);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Portal | AP Tec</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
 
-require_once __DIR__ . "/db.php";
-require_once __DIR__ . "/auth.php";
+    <div class="dashboard-container">
+        
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-layer-group"></i> AP TEC.
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="customer_dashboard.html" class="nav-link active">
+                        <i class="fa-solid fa-gauge-high"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="customer_orders.html" class="nav-link">
+                        <i class="fa-solid fa-box-open"></i> My Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="customer_invoices.html" class="nav-link">
+                        <i class="fa-solid fa-file-invoice"></i> Invoices
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="customer_support.html" class="nav-link">
+                        <i class="fa-solid fa-headset"></i> Support
+                    </a>
+                </li>
+                 <li class="nav-item" style="margin-top: auto;">
+                    <a href="../index.html" class="nav-link logout-btn" style="color: #e74c3c;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </aside>
 
-$u = require_login_api("Customer");
+        <main class="main-content">
+            
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>My Dashboard</h1>
+                    <p style="color: var(--secondary);">Welcome back, Alpha Corp HQ.</p>
+                </div>
+                
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button id="btnNewRequest" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> New Request
+                    </button>
+                    <div class="user-profile">
+                        <span>Alpha Corp</span>
+                        <div class="user-avatar" style="background: #8e44ad;">AC</div>
+                    </div>
+                </div>
+            </header>
 
-header("Content-Type: application/json; charset=utf-8");
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-header("Expires: 0");
+            <div class="dashboard-grid">
+                
+                <div class="wide-widget" style="grid-column: span 4; height: auto; min-height: 250px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="color: white;">Active Repair: <span style="color: var(--primary);">Server Maintenance (Room 3B)</span></h3>
+                        <span class="status-badge status-pending" style="font-size: 0.9rem;">Ticket #9921</span>
+                    </div>
+                    <p style="color: var(--secondary); font-size: 0.9rem; margin-bottom: 30px;">Technician Assigned: John Smith</p>
 
-function j(array $arr, int $code = 200): void {
-  http_response_code($code);
-  echo json_encode($arr);
-  exit;
-}
+                    <div class="track-container">
+                        <div class="track-progress-bar"></div> <div class="step-item completed">
+                            <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+                            <div class="step-text">Request Received</div>
+                        </div>
+                        
+                        <div class="step-item completed">
+                            <div class="step-circle"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="step-text">Diagnostics</div>
+                        </div>
+                        
+                        <div class="step-item active">
+                            <div class="step-circle"><i class="fa-solid fa-gears"></i></div>
+                            <div class="step-text">Repairing</div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-circle"><i class="fa-solid fa-flag-checkered"></i></div>
+                            <div class="step-text">Completed</div>
+                        </div>
+                    </div>
+                </div>
 
-$me = (int)($u["user_id"] ?? 0);
-if ($me <= 0) j(["ok"=>false,"message"=>"Unauthorized"], 401);
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 style="color: #64ffda;">$450.00</h3>
+                        <p>Total Due</p>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                </div>
 
-$action = (string)($_GET["action"] ?? "summary");
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>2</h3>
+                        <p>Active Orders</p>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-box"></i></div>
+                </div>
 
-function table_exists(PDO $pdo, string $table): bool {
-  $stmt = $pdo->prepare("
-    SELECT COUNT(*)
-    FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
-  ");
-  $stmt->execute([$table]);
-  return (int)$stmt->fetchColumn() > 0;
-}
+                <div class="wide-widget" style="grid-column: span 2; height: auto;">
+                    <h3 style="color: white; margin-bottom: 15px;">Recent Activity</h3>
+                    <table class="table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Service / Item</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-mono">ORD-001</td>
+                                <td>HP Toner (x5)</td>
+                                <td>Feb 05</td>
+                                <td><span class="status-badge status-active">Delivered</span></td>
+                                <td><button class="btn-glass" style="padding: 5px 10px; font-size: 0.8rem;">Invoice</button></td>
+                            </tr>
+                            <tr>
+                                <td class="font-mono">REP-102</td>
+                                <td>Printer Fix</td>
+                                <td>Jan 28</td>
+                                <td><span class="status-badge status-active">Completed</span></td>
+                                <td><button class="btn-glass" style="padding: 5px 10px; font-size: 0.8rem;">Invoice</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-// steps: 1..4
-function status_to_step(string $status): int {
-  $s = strtolower(trim($status));
-  if ($s === "pending") return 1;
-  if ($s === "in progress") return 2;
-  if ($s === "waiting for parts") return 3;
-  if ($s === "completed") return 4;
-  return 1;
-}
+            </div>
+        </main>
+    </div>
 
-if ($action === "summary") {
+    <div class="modal-overlay" id="requestModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark close-modal"></i>
+            
+            <div class="modal-header">
+                <h2>Request Service</h2>
+                <p style="color: var(--secondary);">Describe the issue or select items to order.</p>
+            </div>
+            
+            <form>
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--secondary);">Request Type</label>
+                    <select class="modal-input">
+                        <option>Repair / Maintenance</option>
+                        <option>Order Supplies</option>
+                        <option>Software Support</option>
+                    </select>
+                </div>
 
-  // customer info
-  $stmt = $pdo->prepare("SELECT full_name, avatar_initials FROM users WHERE user_id = ? LIMIT 1");
-  $stmt->execute([$me]);
-  $meRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--secondary);">Device / Item Name</label>
+                    <input type="text" class="modal-input" placeholder="e.g. Main Hall Printer">
+                </div>
 
-  // active orders count
-  $stmt = $pdo->prepare("
-    SELECT COUNT(*)
-    FROM tasks
-    WHERE customer_id = ?
-      AND status NOT IN ('Completed','Cancelled')
-  ");
-  $stmt->execute([$me]);
-  $activeOrders = (int)$stmt->fetchColumn();
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--secondary);">Description of Issue</label>
+                    <textarea class="modal-input" rows="4" placeholder="It's making a loud noise when printing..."></textarea>
+                </div>
 
-  // active repair (latest open task)
-  $stmt = $pdo->prepare("
-    SELECT
-      t.task_id,
-      t.task_reference,
-      t.title,
-      t.location,
-      t.status,
-      tech.full_name AS technician_name
-    FROM tasks t
-    LEFT JOIN users tech ON tech.user_id = t.assigned_to
-    WHERE t.customer_id = ?
-      AND t.status NOT IN ('Completed','Cancelled')
-    ORDER BY t.created_at DESC
-    LIMIT 1
-  ");
-  $stmt->execute([$me]);
-  $activeRepair = $stmt->fetch(PDO::FETCH_ASSOC);
+                <div class="form-group">
+                    <label class="form-label" style="color: var(--secondary);">Preferred Date</label>
+                    <input type="date" class="date-input" style="width: 100%; background: rgba(0,0,0,0.2); color: white;">
+                </div>
 
-  // recent activity (latest 6 tasks)
-  $stmt = $pdo->prepare("
-    SELECT task_reference, title, created_at, status
-    FROM tasks
-    WHERE customer_id = ?
-    ORDER BY created_at DESC
-    LIMIT 6
-  ");
-  $stmt->execute([$me]);
-  $recent = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button type="button" class="btn btn-cancel" style="flex: 1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  // total due (if invoices table exists)
-  $totalDue = 0.0;
-
-  if (table_exists($pdo, "invoices")) {
-    $cols = $pdo->query("SHOW COLUMNS FROM invoices")->fetchAll(PDO::FETCH_ASSOC);
-    $colNames = array_map(fn($r) => $r["Field"], $cols);
-
-    if (in_array("customer_id", $colNames, true) && in_array("total_amount", $colNames, true)) {
-      if (in_array("paid_amount", $colNames, true)) {
-        $stmt = $pdo->prepare("
-          SELECT COALESCE(SUM(total_amount - COALESCE(paid_amount,0)),0)
-          FROM invoices
-          WHERE customer_id = ?
-        ");
-        $stmt->execute([$me]);
-        $totalDue = (float)$stmt->fetchColumn();
-      } elseif (in_array("is_paid", $colNames, true)) {
-        $stmt = $pdo->prepare("
-          SELECT COALESCE(SUM(total_amount),0)
-          FROM invoices
-          WHERE customer_id = ? AND is_paid = 0
-        ");
-        $stmt->execute([$me]);
-        $totalDue = (float)$stmt->fetchColumn();
-      } else {
-        $stmt = $pdo->prepare("
-          SELECT COALESCE(SUM(total_amount),0)
-          FROM invoices
-          WHERE customer_id = ?
-        ");
-        $stmt->execute([$me]);
-        $totalDue = (float)$stmt->fetchColumn();
-      }
-    }
-  }
-
-  $step = $activeRepair ? status_to_step((string)$activeRepair["status"]) : 0;
-
-  j([
-    "ok" => true,
-    "customer" => [
-      "full_name" => (string)($meRow["full_name"] ?? ""),
-      "avatar_initials" => (string)($meRow["avatar_initials"] ?? "CU"),
-    ],
-    "widgets" => [
-      "total_due" => $totalDue,
-      "active_orders" => $activeOrders,
-    ],
-    "active_repair" => $activeRepair ? [
-      "task_reference" => (string)$activeRepair["task_reference"],
-      "title" => (string)$activeRepair["title"],
-      "location" => (string)($activeRepair["location"] ?? ""),
-      "status" => (string)$activeRepair["status"],
-      "technician_name" => (string)($activeRepair["technician_name"] ?? "Not Assigned"),
-      "step" => $step
-    ] : null,
-    "recent_activity" => array_map(function($r){
-      return [
-        "order_id" => (string)$r["task_reference"],
-        "service"  => (string)$r["title"],
-        "date"     => (string)$r["created_at"],
-        "status"   => (string)$r["status"],
-      ];
-    }, $recent),
-  ]);
-}
-
-j(["ok"=>false,"message"=>"Unknown action"], 400);
+    <script src="../js/customer.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script src="../js/customer_dashboard.js"></script>
+</body>
+</html>

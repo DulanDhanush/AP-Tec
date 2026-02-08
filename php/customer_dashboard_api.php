@@ -33,25 +33,24 @@ function table_exists(PDO $pdo, string $table): bool {
   return (int)$stmt->fetchColumn() > 0;
 }
 
-// Map your tasks.status (ENUM Title Case) to step index
+// steps: 1..4
 function status_to_step(string $status): int {
   $s = strtolower(trim($status));
-  if ($s === "pending") return 1;                 // Request Received
-  if ($s === "in progress") return 2;             // Diagnostics
-  if ($s === "waiting for parts") return 3;       // Repairing
-  if ($s === "completed") return 4;               // Completed
+  if ($s === "pending") return 1;
+  if ($s === "in progress") return 2;
+  if ($s === "waiting for parts") return 3;
+  if ($s === "completed") return 4;
   return 1;
 }
 
-// ---------- SUMMARY (all widgets) ----------
 if ($action === "summary") {
 
-  // customer header
+  // customer info
   $stmt = $pdo->prepare("SELECT full_name, avatar_initials FROM users WHERE user_id = ? LIMIT 1");
   $stmt->execute([$me]);
   $meRow = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-  // active orders
+  // active orders count
   $stmt = $pdo->prepare("
     SELECT COUNT(*)
     FROM tasks
@@ -61,7 +60,7 @@ if ($action === "summary") {
   $stmt->execute([$me]);
   $activeOrders = (int)$stmt->fetchColumn();
 
-  // active repair (latest not completed/cancelled)
+  // active repair (latest open task)
   $stmt = $pdo->prepare("
     SELECT
       t.task_id,
@@ -82,33 +81,23 @@ if ($action === "summary") {
 
   // recent activity (latest 6 tasks)
   $stmt = $pdo->prepare("
-    SELECT
-      t.task_reference,
-      t.title,
-      t.created_at,
-      t.status
-    FROM tasks t
-    WHERE t.customer_id = ?
-    ORDER BY t.created_at DESC
+    SELECT task_reference, title, created_at, status
+    FROM tasks
+    WHERE customer_id = ?
+    ORDER BY created_at DESC
     LIMIT 6
   ");
   $stmt->execute([$me]);
   $recent = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-  // total due (real)
-  // If you have invoices/payments table, use it.
-  // If not, return 0 for now (or compute dummy from tasks if you later add task_cost column)
+  // total due (if invoices table exists)
   $totalDue = 0.0;
 
-  // Optional: if you already have an invoices table with (customer_id, total_amount, paid_amount)
   if (table_exists($pdo, "invoices")) {
-    // Try common columns safely
-    // If your invoices columns are different, tell me and I adjust.
     $cols = $pdo->query("SHOW COLUMNS FROM invoices")->fetchAll(PDO::FETCH_ASSOC);
     $colNames = array_map(fn($r) => $r["Field"], $cols);
 
     if (in_array("customer_id", $colNames, true) && in_array("total_amount", $colNames, true)) {
-      // paid columns may differ
       if (in_array("paid_amount", $colNames, true)) {
         $stmt = $pdo->prepare("
           SELECT COALESCE(SUM(total_amount - COALESCE(paid_amount,0)),0)
@@ -126,7 +115,6 @@ if ($action === "summary") {
         $stmt->execute([$me]);
         $totalDue = (float)$stmt->fetchColumn();
       } else {
-        // fallback: sum total_amount
         $stmt = $pdo->prepare("
           SELECT COALESCE(SUM(total_amount),0)
           FROM invoices
@@ -138,8 +126,7 @@ if ($action === "summary") {
     }
   }
 
-  $step = 0;
-  if ($activeRepair) $step = status_to_step((string)$activeRepair["status"]);
+  $step = $activeRepair ? status_to_step((string)$activeRepair["status"]) : 0;
 
   j([
     "ok" => true,
@@ -152,35 +139,22 @@ if ($action === "summary") {
       "active_orders" => $activeOrders,
     ],
     "active_repair" => $activeRepair ? [
-      "task_reference" => $activeRepair["task_reference"],
-      "title" => $activeRepair["title"],
-      "location" => $activeRepair["location"],
-      "status" => $activeRepair["status"],
-      "technician_name" => $activeRepair["technician_name"] ?? "Not Assigned",
+      "task_reference" => (string)$activeRepair["task_reference"],
+      "title" => (string)$activeRepair["title"],
+      "location" => (string)($activeRepair["location"] ?? ""),
+      "status" => (string)$activeRepair["status"],
+      "technician_name" => (string)($activeRepair["technician_name"] ?? "Not Assigned"),
       "step" => $step
     ] : null,
     "recent_activity" => array_map(function($r){
       return [
         "order_id" => (string)$r["task_reference"],
-        "service" => (string)$r["title"],
-        "date" => (string)$r["created_at"],
-        "status" => (string)$r["status"],
+        "service"  => (string)$r["title"],
+        "date"     => (string)$r["created_at"],
+        "status"   => (string)$r["status"],
       ];
     }, $recent),
   ]);
-}
-
-// Optional: return only recent
-if ($action === "recent") {
-  $stmt = $pdo->prepare("
-    SELECT task_reference, title, created_at, status
-    FROM tasks
-    WHERE customer_id = ?
-    ORDER BY created_at DESC
-    LIMIT 10
-  ");
-  $stmt->execute([$me]);
-  j(["ok"=>true, "items"=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
 }
 
 j(["ok"=>false,"message"=>"Unknown action"], 400);
