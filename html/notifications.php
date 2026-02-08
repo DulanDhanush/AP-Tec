@@ -7,6 +7,11 @@ $u = require_login(["Admin","Owner"]);
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 header("Expires: 0");
+
+// ✅ FIX: unified display name (supports full_name OR name OR username)
+$displayName = trim((string)(
+  ($u["full_name"] ?? "") ?: ($u["name"] ?? "") ?: ($u["username"] ?? "") ?: "Admin"
+));
 ?>
 <!doctype html>
 <html lang="en">
@@ -74,12 +79,13 @@ header("Expires: 0");
           </div>
 
           <div class="user-profile">
-            <span><?= htmlspecialchars(($u["full_name"] ?? "") ?: ($u["username"] ?? "") ?: "Admin") ?></span>
+            <!-- ✅ FIXED: now will show correct name for any logged-in user -->
+            <span><?= htmlspecialchars($displayName) ?></span>
             <div class="user-avatar">
               <?php
-                $name = (($u["full_name"] ?? "") ?: ($u["username"] ?? "") ?: "Admin");
-                $parts = preg_split('/\s+/', trim($name));
+                $parts = preg_split('/\s+/', trim($displayName));
                 $initials = strtoupper(substr($parts[0] ?? 'A', 0, 1) . substr($parts[1] ?? 'D', 0, 1));
+                if (strlen($initials) < 2) $initials = strtoupper(substr($displayName, 0, 2));
                 echo htmlspecialchars($initials);
               ?>
             </div>
@@ -102,8 +108,6 @@ header("Expires: 0");
               >0</span
             >
           </button>
-
-          
         </div>
 
         <div id="section-inbox" class="tab-section">
@@ -187,5 +191,30 @@ header("Expires: 0");
 
     <script src="../js/notifications.js"></script>
     <script src="../js/dashboard.js"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const nameSpan = document.querySelector(".user-profile span");
+  const avatar = document.querySelector(".user-profile .user-avatar");
+  if (!nameSpan || !avatar) return;
+
+  try {
+    const res = await fetch("../php/me_api.php", { credentials: "same-origin" });
+    const data = await res.json();
+    if (!data.ok || !data.user) return;
+
+    const displayName = (data.user.display_name || "").trim();
+    if (!displayName) return;
+
+    nameSpan.textContent = displayName;
+
+    const parts = displayName.split(/\s+/).filter(Boolean);
+    let initials = ((parts[0] || "U")[0] || "U") + ((parts[1] || "")[0] || "");
+    initials = initials.toUpperCase();
+    if (initials.length < 2) initials = displayName.slice(0, 2).toUpperCase();
+
+    avatar.textContent = initials;
+  } catch (e) {}
+});
+</script>
   </body>
 </html>

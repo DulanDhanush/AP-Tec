@@ -1,163 +1,210 @@
-// js/notifications.js
+// ../js/notifications.js
 (() => {
   const notifList = document.getElementById("notifList");
   const notifCount = document.getElementById("notifCount");
   const btnClear = document.getElementById("btnClear");
 
-  const tabBtns = document.querySelectorAll(".tab-btn");
-  const sections = document.querySelectorAll(".tab-section");
+  // Settings elements (you already have them in HTML)
+  const set_low_inventory = document.getElementById("set_low_inventory");
+  const set_server_downtime = document.getElementById("set_server_downtime");
+  const set_daily_summary = document.getElementById("set_daily_summary");
+  const set_new_user_signups = document.getElementById("set_new_user_signups");
+  const btnSaveSettings = document.getElementById("btnSaveSettings");
 
   function esc(s) {
     return String(s ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function formatTs(ts) {
+    // Your API gives "YYYY-MM-DD HH:MM:SS"
+    return ts ? esc(ts) : "-";
+  }
+
+  function typeBadge(type) {
+    // Keep it simple; uses inline styling so no CSS change required
+    const t = String(type || "INFO");
+    let bg = "rgba(255,255,255,0.08)";
+    let fg = "var(--secondary)";
+
+    const up = t.toUpperCase();
+    if (up.includes("ALERT") || up.includes("ERROR") || up.includes("CRIT")) {
+      bg = "rgba(231, 76, 60, 0.18)";
+      fg = "#ffb4b4";
+    } else if (up.includes("WARN")) {
+      bg = "rgba(241, 196, 15, 0.18)";
+      fg = "#ffe7a3";
+    } else if (up.includes("SYSTEM")) {
+      bg = "rgba(46, 204, 113, 0.14)";
+      fg = "#bff4d2";
+    }
+
+    return `<span style="padding:4px 10px;border-radius:999px;background:${bg};color:${fg};font-size:0.75rem;">${esc(t)}</span>`;
   }
 
   async function apiGet(url) {
-    const res = await fetch(url, {
-      cache: "no-store",
-      credentials: "same-origin",
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data || data.ok !== true) {
-      throw new Error(
-        data && data.error ? data.error : `Request failed: ${res.status}`,
-      );
+    const res = await fetch(url, { credentials: "same-origin" });
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("API returned non-JSON (redirect/PHP error).");
     }
+    if (!res.ok || !data.ok) throw new Error(data.error || "API error");
     return data;
   }
 
-  // ✅ Matches your CSS: icon-alert / icon-system / icon-success
-  // ✅ Matches your sample icons: triangle-exclamation / server / cart-shopping
-  function iconMeta(n) {
-    const type = String(n.type || "").toLowerCase();
-    const title = String(n.title || "").toLowerCase();
-
-    // Alerts
-    if (
-      type === "alert" ||
-      title.includes("critical") ||
-      title.includes("urgent") ||
-      title.includes("failed")
-    ) {
-      return { wrapClass: "icon-alert", iconClass: "fa-triangle-exclamation" };
+  async function apiPost(url, payload) {
+    const res = await fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
+    });
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("API returned non-JSON (redirect/PHP error).");
     }
-
-    // System
-    if (
-      type === "system" ||
-      title.includes("backup") ||
-      title.includes("database") ||
-      title.includes("server")
-    ) {
-      return { wrapClass: "icon-system", iconClass: "fa-server" };
-    }
-
-    // Success / Order
-    if (
-      type === "success" ||
-      title.includes("order") ||
-      title.includes("approved") ||
-      title.includes("resolved")
-    ) {
-      return { wrapClass: "icon-success", iconClass: "fa-cart-shopping" };
-    }
-
-    // Default -> system style
-    return { wrapClass: "icon-system", iconClass: "fa-bell" };
+    if (!res.ok || !data.ok) throw new Error(data.error || "API error");
+    return data;
   }
 
-  function renderNotifications(rows) {
-    if (!notifList) return;
-
-    if (!rows || rows.length === 0) {
+  function render(rows) {
+    if (!Array.isArray(rows) || rows.length === 0) {
       notifList.innerHTML = `<div style="color: var(--secondary); padding: 10px;">No notifications.</div>`;
       return;
     }
 
-    // ✅ EXACT UI structure from your notifications.html
     notifList.innerHTML = rows
-      .map((n) => {
-        const isRead = Number(n.is_read) === 1;
-        const meta = iconMeta(n);
-
+      .map((r) => {
+        const unread = String(r.is_read) === "0" || r.is_read === 0;
         return `
-        <div class="notif-item ${isRead ? "" : "unread"}">
-          <div class="notif-icon ${esc(meta.wrapClass)}">
-            <i class="fa-solid ${esc(meta.iconClass)}"></i>
+        <div class="notification-item"
+             data-id="${esc(r.notif_id)}"
+             style="
+               padding: 14px;
+               border: 1px solid var(--border-glass);
+               border-radius: 12px;
+               margin-bottom: 12px;
+               background: ${unread ? "rgba(0, 255, 200, 0.06)" : "rgba(2, 12, 27, 0.25)"};
+               cursor: pointer;
+             "
+             title="Click to mark as read"
+        >
+          <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                ${typeBadge(r.type)}
+                <span style="color: white; font-weight: 600;">${esc(r.title)}</span>
+                ${unread ? `<span style="color:#7fffd4;font-size:0.75rem;">• Unread</span>` : ""}
+              </div>
+              <div style="color: var(--secondary); font-size: 0.9rem; line-height: 1.4;">
+                ${esc(r.message)}
+              </div>
+            </div>
+            <div style="color: var(--secondary); font-size: 0.8rem; white-space:nowrap;">
+              ${formatTs(r.created_at)}
+            </div>
           </div>
-          <div class="notif-content">
-            <h4>${esc(n.title || "Notification")}</h4>
-            <p>${esc(n.message || "")}</p>
-          </div>
-          <div class="notif-time">${esc(n.created_at || "")}</div>
         </div>
       `;
       })
       .join("");
+
+    // click to mark read
+    notifList.querySelectorAll(".notification-item").forEach((el) => {
+      el.addEventListener("click", async () => {
+        const id = Number(el.dataset.id || 0);
+        if (!id) return;
+        try {
+          await apiPost(`../php/notifications_api.php?action=mark_read`, {
+            notif_id: id,
+          });
+          // Reload list (keeps count accurate)
+          await loadNotifications();
+        } catch (e) {
+          console.error(e);
+          alert(e.message || "Failed to mark as read");
+        }
+      });
+    });
   }
 
-  async function loadInbox() {
-    if (!notifList) return;
-
-    notifList.innerHTML = `<div style="color: var(--secondary); padding: 10px;">Loading notifications...</div>`;
-
-    const data = await apiGet("../php/notifications_api.php?action=list");
-
-    // ✅ Update inbox badge (your page uses id="notifCount")
-    if (notifCount) notifCount.textContent = String(data.unread ?? 0);
-
-    // ✅ Render list
-    renderNotifications(data.notifications || []);
-  }
-
-  async function markAllRead() {
-    if (!btnClear) return;
-
-    btnClear.disabled = true;
-    const old = btnClear.textContent;
-    btnClear.textContent = "Marking...";
-
+  async function loadNotifications() {
     try {
-      await apiGet("../php/notifications_api.php?action=mark_all_read");
-      await loadInbox(); // ✅ refresh list + badge
+      notifList.innerHTML = `<div style="color: var(--secondary); padding: 10px;">Loading notifications...</div>`;
+      const data = await apiGet(
+        `../php/notifications_api.php?action=list&limit=100`,
+      );
+      render(data.rows);
+      if (notifCount) notifCount.textContent = String(data.unread ?? 0);
     } catch (e) {
-      alert("Mark all as read failed: " + e.message);
-    } finally {
-      btnClear.disabled = false;
-      btnClear.textContent = old;
+      console.error(e);
+      notifList.innerHTML = `<div style="color: #ffb4b4; padding: 10px;">${esc(e.message || "Failed to load notifications")}</div>`;
     }
   }
 
-  // ✅ Button click
-  if (btnClear) {
-    btnClear.addEventListener("click", (e) => {
-      e.preventDefault();
-      markAllRead();
-    });
+  async function loadSettings() {
+    // If settings section exists, load it too
+    if (!set_low_inventory || !btnSaveSettings) return;
+
+    try {
+      const data = await apiGet(
+        `../php/notifications_api.php?action=settings_get`,
+      );
+      const s = data.settings || {};
+      if (set_low_inventory)
+        set_low_inventory.checked = !!Number(s.low_inventory);
+      if (set_server_downtime)
+        set_server_downtime.checked = !!Number(s.server_downtime);
+      if (set_daily_summary)
+        set_daily_summary.checked = !!Number(s.daily_summary);
+      if (set_new_user_signups)
+        set_new_user_signups.checked = !!Number(s.new_user_signups);
+    } catch (e) {
+      console.error(e);
+      // silently ignore to not break inbox
+    }
   }
 
-  // ✅ Tabs (keep your UI behavior)
-  tabBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      const target = btn.getAttribute("data-target");
-      sections.forEach((sec) => {
-        sec.style.display = sec.id === target ? "" : "none";
+  async function saveSettings() {
+    try {
+      await apiPost(`../php/notifications_api.php?action=settings_save`, {
+        low_inventory: !!set_low_inventory?.checked,
+        server_downtime: !!set_server_downtime?.checked,
+        daily_summary: !!set_daily_summary?.checked,
+        new_user_signups: !!set_new_user_signups?.checked,
       });
+      alert("Configuration saved.");
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Failed to save configuration");
+    }
+  }
 
-      if (target === "section-inbox") await loadInbox();
-    });
+  // Mark all as read
+  btnClear?.addEventListener("click", async () => {
+    try {
+      await apiGet(`../php/notifications_api.php?action=mark_all_read`);
+      await loadNotifications();
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Failed to mark all as read");
+    }
   });
 
-  // Initial load
-  loadInbox().catch((e) => {
-    if (notifList)
-      notifList.innerHTML = `<div style="color:#e74c3c; padding:10px;">${esc(e.message)}</div>`;
-  });
+  // Save config
+  btnSaveSettings?.addEventListener("click", saveSettings);
+
+  // initial load
+  loadNotifications();
+  loadSettings();
 })();
