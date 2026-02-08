@@ -111,8 +111,8 @@ $displayName = trim((string)(
                     <input type="text" id="logSearch" placeholder="Search Log ID or User...">
                 </div>
 
-                <button id="btnExportCSV" class="btn btn-primary" style="padding: 10px 15px;">
-                    <i class="fa-solid fa-download"></i> Export CSV
+                <button id="btnPDF" class="btn btn-primary" style="padding: 10px 15px;" onclick="window.open('../php/generate_pdf.php', '_blank')">
+                    <i class="fa-solid fa-file-pdf"></i> PDF Report
                 </button>
             </div>
         </div>
