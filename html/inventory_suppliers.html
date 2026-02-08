@@ -1,149 +1,286 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Inventory & Suppliers | AP Tec</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="../css/style.css">
-    
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link rel="stylesheet" href="../css/style.css" />
+
     <style>
-        .stock-level-container {
-            margin-bottom: 20px;
-        }
-        .level-label {
-            display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-white);
-        }
-        .level-bar-bg {
-            height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;
-        }
-        .level-bar-fill {
-            height: 100%; border-radius: 5px; transition: width 1s ease;
-        }
-        .supplier-card {
-            display: flex; align-items: center; gap: 15px; padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: 0.3s;
-        }
-        .supplier-card:hover {
-            background: rgba(255,255,255,0.02);
-        }
-        .supplier-logo {
-            width: 50px; height: 50px; background: white; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--bg-dark);
-        }
+      .stock-level-container {
+        margin-bottom: 20px;
+      }
+      .level-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+        color: var(--text-white);
+      }
+      .level-bar-bg {
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .level-bar-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 1s ease;
+      }
+      .supplier-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: 0.3s;
+      }
+      .supplier-card:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .supplier-logo {
+        width: 50px;
+        height: 50px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: var(--bg-dark);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="dashboard-container">
-        
-        <aside class="sidebar">
-            <div class="sidebar-brand"><i class="fa-solid fa-layer-group"></i> AP TEC.</div>
-            <ul class="nav-menu">
-                <li class="nav-item"><a href="owner_dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> BI Reports</a></li>
-                <li class="nav-item"><a href="inventory_suppliers.html" class="nav-link active"><i class="fa-solid fa-boxes-stacked"></i> Inventory & Suppliers</a></li>
-                <li class="nav-item"><a href="approvals.html" class="nav-link"><i class="fa-solid fa-file-signature"></i> Approvals</a></li>
-                <li class="nav-item"><a href="employee_performance.html" class="nav-link"><i class="fa-solid fa-users-gear"></i> Employee Performance</a></li>
-                 <li class="nav-item" style="margin-top: auto;">
-                    <a href="../index.html" class="nav-link logout-btn" style="color: #e74c3c;">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
-                    </a>
-                </li>
-            </ul>
-        </aside>
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <i class="fa-solid fa-layer-group"></i> AP TEC.
+        </div>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="owner_dashboard.html" class="nav-link"
+              ><i class="fa-solid fa-chart-line"></i> BI Reports</a
+            >
+          </li>
+          <li class="nav-item">
+            <a href="inventory_suppliers.html" class="nav-link active"
+              ><i class="fa-solid fa-boxes-stacked"></i> Inventory &
+              Suppliers</a
+            >
+          </li>
+          <li class="nav-item">
+            <a href="approvals.html" class="nav-link"
+              ><i class="fa-solid fa-file-signature"></i> Approvals</a
+            >
+          </li>
+          <li class="nav-item">
+            <a href="employee_performance.html" class="nav-link"
+              ><i class="fa-solid fa-users-gear"></i> Employee Performance</a
+            >
+          </li>
+          <li class="nav-item" style="margin-top: auto">
+            <a
+              href="../index.html"
+              class="nav-link logout-btn"
+              style="color: #e74c3c"
+            >
+              <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </aside>
 
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="page-title">
-                    <h1>Supply Chain</h1>
-                    <p style="color: var(--secondary);">Monitor stock levels and manage supplier contracts.</p>
-                </div>
-                <div class="user-profile"><span>Mr. Director</span><div class="user-avatar" style="background: #f1c40f; color: #000;">MD</div></div>
-            </header>
-
-            <div class="dashboard-grid">
-                
-                <div class="wide-widget" style="grid-column: span 2; min-height: 400px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                        <h3 style="color: white;">Current Inventory Levels</h3>
-                        <button id="btnAddStock" class="btn-icon btn-view" style="width: auto; padding: 0 10px; gap: 5px;">
-                            <i class="fa-solid fa-plus"></i> Add Item
-                        </button>
-                    </div>
-                    
-                    <div class="stock-level-container">
-                        <div class="level-label"><span>HP 85A Toner Cartridges</span> <span style="color: #2ecc71;">85% (Safe)</span></div>
-                        <div class="level-bar-bg"><div class="level-bar-fill" style="width: 85%; background: #2ecc71; box-shadow: 0 0 10px #2ecc71;"></div></div>
-                    </div>
-
-                    <div class="stock-level-container">
-                        <div class="level-label"><span>Canon Drum Units</span> <span style="color: #f1c40f;">40% (Moderate)</span></div>
-                        <div class="level-bar-bg"><div class="level-bar-fill" style="width: 40%; background: #f1c40f; box-shadow: 0 0 10px #f1c40f;"></div></div>
-                    </div>
-
-                    <div class="stock-level-container">
-                        <div class="level-label"><span>Fuser Assemblies (Model X)</span> <span style="color: #e74c3c;">12% (CRITICAL)</span></div>
-                        <div class="level-bar-bg"><div class="level-bar-fill" style="width: 12%; background: #e74c3c; box-shadow: 0 0 10px #e74c3c;"></div></div>
-                        <button class="btn btn-primary" style="margin-top: 10px; font-size: 0.8rem; padding: 5px 15px;">Order Restock</button>
-                    </div>
-                </div>
-
-                <div class="wide-widget" style="grid-column: span 2; min-height: 400px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-                        <h3 style="color: white;">Registered Suppliers</h3>
-                        <button id="btnAddSupplier" class="btn-glass"><i class="fa-solid fa-plus"></i> Add New</button>
-                    </div>
-
-                    <div class="supplier-list">
-                        <div class="supplier-card">
-                            <div class="supplier-logo"><i class="fa-brands fa-hp" style="color: #0096D6; font-size: 1.5rem;"></i></div>
-                            <div style="flex: 1;">
-                                <h4 style="color: white;">HP Supplies Inc.</h4>
-                                <p style="font-size: 0.8rem; color: var(--secondary);">Next Delivery: Feb 12</p>
-                            </div>
-                            <span class="status-badge status-active">Contract Active</span>
-                            <button class="btn-icon btn-view"><i class="fa-solid fa-phone"></i></button>
-                        </div>
-
-                        <div class="supplier-card">
-                            <div class="supplier-logo" style="color: #333;">CAN</div>
-                            <div style="flex: 1;">
-                                <h4 style="color: white;">Canon Wholesale</h4>
-                                <p style="font-size: 0.8rem; color: var(--secondary);">Next Delivery: Pending Approval</p>
-                            </div>
-                            <span class="status-badge status-pending">Renewal Due</span>
-                            <button class="btn-icon btn-view"><i class="fa-solid fa-phone"></i></button>
-                        </div>
-                    </div>
-                </div>
+      <main class="main-content">
+        <header class="top-bar">
+          <div class="page-title">
+            <h1>Supply Chain</h1>
+            <p style="color: var(--secondary)">
+              Monitor stock levels and manage supplier contracts.
+            </p>
+          </div>
+          <div class="user-profile">
+            <span>Mr. Director</span>
+            <div class="user-avatar" style="background: #f1c40f; color: #000">
+              MD
             </div>
-        </main>
+          </div>
+        </header>
+
+        <div class="dashboard-grid">
+          <div
+            class="wide-widget"
+            style="grid-column: span 2; min-height: 400px"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 25px;
+              "
+            >
+              <h3 style="color: white">Current Inventory Levels</h3>
+              <button
+                id="btnAddStock"
+                class="btn-icon btn-view"
+                style="width: auto; padding: 0 10px; gap: 5px"
+              >
+                <i class="fa-solid fa-plus"></i> Add Item
+              </button>
+            </div>
+
+            <div class="stock-level-container">
+              <div class="level-label">
+                <span>HP 85A Toner Cartridges</span>
+                <span style="color: #2ecc71">85% (Safe)</span>
+              </div>
+              <div class="level-bar-bg">
+                <div
+                  class="level-bar-fill"
+                  style="
+                    width: 85%;
+                    background: #2ecc71;
+                    box-shadow: 0 0 10px #2ecc71;
+                  "
+                ></div>
+              </div>
+            </div>
+
+            <div class="stock-level-container">
+              <div class="level-label">
+                <span>Canon Drum Units</span>
+                <span style="color: #f1c40f">40% (Moderate)</span>
+              </div>
+              <div class="level-bar-bg">
+                <div
+                  class="level-bar-fill"
+                  style="
+                    width: 40%;
+                    background: #f1c40f;
+                    box-shadow: 0 0 10px #f1c40f;
+                  "
+                ></div>
+              </div>
+            </div>
+
+            <div class="stock-level-container">
+              <div class="level-label">
+                <span>Fuser Assemblies (Model X)</span>
+                <span style="color: #e74c3c">12% (CRITICAL)</span>
+              </div>
+              <div class="level-bar-bg">
+                <div
+                  class="level-bar-fill"
+                  style="
+                    width: 12%;
+                    background: #e74c3c;
+                    box-shadow: 0 0 10px #e74c3c;
+                  "
+                ></div>
+              </div>
+              <button
+                class="btn btn-primary"
+                style="margin-top: 10px; font-size: 0.8rem; padding: 5px 15px"
+              >
+                Order Restock
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="wide-widget"
+            style="grid-column: span 2; min-height: 400px"
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+              "
+            >
+              <h3 style="color: white">Registered Suppliers</h3>
+              <button id="btnAddSupplier" class="btn-glass">
+                <i class="fa-solid fa-plus"></i> Add New
+              </button>
+            </div>
+
+            <div class="supplier-list">
+              <div class="supplier-card">
+                <div class="supplier-logo">
+                  <i
+                    class="fa-brands fa-hp"
+                    style="color: #0096d6; font-size: 1.5rem"
+                  ></i>
+                </div>
+                <div style="flex: 1">
+                  <h4 style="color: white">HP Supplies Inc.</h4>
+                  <p style="font-size: 0.8rem; color: var(--secondary)">
+                    Next Delivery: Feb 12
+                  </p>
+                </div>
+                <span class="status-badge status-active">Contract Active</span>
+                <button class="btn-icon btn-view">
+                  <i class="fa-solid fa-phone"></i>
+                </button>
+              </div>
+
+              <div class="supplier-card">
+                <div class="supplier-logo" style="color: #333">CAN</div>
+                <div style="flex: 1">
+                  <h4 style="color: white">Canon Wholesale</h4>
+                  <p style="font-size: 0.8rem; color: var(--secondary)">
+                    Next Delivery: Pending Approval
+                  </p>
+                </div>
+                <span class="status-badge status-pending">Renewal Due</span>
+                <button class="btn-icon btn-view">
+                  <i class="fa-solid fa-phone"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
 
     <div class="modal-overlay" id="addModal">
-        <div class="modal-content">
-            <i class="fa-solid fa-xmark close-modal"></i>
-            
-            <div class="modal-header">
-                <h2 id="modalTitle">Add New Item</h2>
-                <p style="color: var(--secondary);">Enter the details below to update records.</p>
-            </div>
-            
-            <form>
-                <div id="dynamicForm"></div>
+      <div class="modal-content">
+        <i class="fa-solid fa-xmark close-modal"></i>
 
-                <div style="display: flex; gap: 15px; margin-top: 30px;">
-                    <button type="button" class="btn btn-cancel" style="flex: 1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Record</button>
-                </div>
-            </form>
+        <div class="modal-header">
+          <h2 id="modalTitle">Add New Item</h2>
+          <p style="color: var(--secondary)">
+            Enter the details below to update records.
+          </p>
         </div>
+
+        <form>
+          <div id="dynamicForm"></div>
+
+          <div style="display: flex; gap: 15px; margin-top: 30px">
+            <button type="button" class="btn btn-cancel" style="flex: 1">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" style="flex: 1">
+              Save Record
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="../js/inventory.js"></script>
     <script src="../js/dashboard.js"></script>
-</body>
+  </body>
 </html>
