@@ -50,14 +50,14 @@ $stmt = $pdo->prepare("SELECT COUNT(*) AS overdue_count FROM invoices WHERE (sta
 $stmt->execute([":today"=>$today]);
 $overdueCount = (int)$stmt->fetch()["overdue_count"];
 
-// Transactions
+// Transactions (✅ HY093 FIX: unique placeholders per UNION part)
 $trx = $pdo->prepare("
   (
     SELECT CONCAT('INV-', invoice_number) AS trx_id, issue_date AS trx_date,
            (SELECT full_name FROM users u WHERE u.user_id = invoices.customer_id LIMIT 1) AS party,
            'Service Payment' AS trx_type, total_amount AS amount, status AS status
     FROM invoices
-    WHERE issue_date BETWEEN :s AND :e
+    WHERE issue_date BETWEEN :s1 AND :e1
   )
   UNION ALL
   (
@@ -65,12 +65,19 @@ $trx = $pdo->prepare("
            (SELECT full_name FROM users u WHERE u.user_id = approvals.requester_id LIMIT 1) AS party,
            'Inventory Purchase' AS trx_type, (amount * -1) AS amount, status AS status
     FROM approvals
-    WHERE type='Purchase Order' AND DATE(created_at) BETWEEN :s AND :e
+    WHERE type='Purchase Order' AND DATE(created_at) BETWEEN :s2 AND :e2
   )
   ORDER BY trx_date DESC
   LIMIT 15
 ");
-$trx->execute([":s"=>$startDate, ":e"=>$endDate]);
+
+$trx->execute([
+  ":s1" => $startDate,
+  ":e1" => $endDate,
+  ":s2" => $startDate,
+  ":e2" => $endDate,
+]);
+
 $rows = $trx->fetchAll();
 
 function money($n): string { return number_format((float)$n, 2, ".", ","); }

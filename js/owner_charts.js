@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reportBtn.addEventListener("click", () => {
       const range = getActiveRange();
       window.open(
-        `../php/owner_report.php?range=${encodeURIComponent(range)}`,
+        `../php/owner_report_fpdf.php?range=${encodeURIComponent(range)}`,
         "_blank",
       );
     });
