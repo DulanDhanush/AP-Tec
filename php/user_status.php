@@ -1,31 +1,48 @@
 <?php
-// php/user_status.php
 declare(strict_types=1);
 
-header("Content-Type: application/json; charset=utf-8");
-
-require_once __DIR__ . "/auth.php";
 require_once __DIR__ . "/db.php";
-$loggerPath = __DIR__ . "/logger.php";
-if (file_exists($loggerPath)) require_once $loggerPath;
+require_once __DIR__ . "/auth.php";
+require_once __DIR__ . "/logger.php";
 
-$admin = require_login("Admin");
+$me = require_login_api(["Admin", "Owner"]);
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$input = json_decode(file_get_contents("php://input"), true) ?? [];
-$id = (int)($input["id"] ?? 0);
-$newStatus = trim((string)($input["status"] ?? "Inactive"));
-
-$allowed = ["Active","Inactive","Banned"];
-if ($id <= 0 || !in_array($newStatus, $allowed, true)) {
-    echo json_encode(["ok" => false, "error" => "Invalid request"]);
+function j(array $data, int $code = 200): void {
+    http_response_code($code);
+    header("Content-Type: application/json; charset=utf-8");
+    echo json_encode($data);
     exit;
 }
 
-$stmt = $pdo->prepare("UPDATE users SET status = :s WHERE user_id = :id");
-$stmt->execute([":s" => $newStatus, ":id" => $id]);
+$raw = file_get_contents("php://input");
+$body = json_decode($raw ?: "{}", true);
+if (!is_array($body)) j(["ok" => false, "error" => "INVALID_JSON"], 400);
 
-if (function_exists("log_event")) {
-    log_event($pdo, "WARNING", "UserMgmt", "Admin {$admin['username']} set user #{$id} status to {$newStatus}", $admin["user_id"]);
+$id = (int)($body["id"] ?? 0);
+$status = trim((string)($body["status"] ?? ""));
+
+if ($id <= 0) j(["ok" => false, "error" => "BAD_ID"], 400);
+
+// allow statuses your UI uses
+$allowedStatuses = ["Active", "Inactive", "Banned"];
+if (!in_array($status, $allowedStatuses, true)) {
+    j(["ok" => false, "error" => "INVALID_STATUS"], 400);
 }
 
-echo json_encode(["ok" => true, "message" => "Status updated"]);
+// prevent self-deactivate
+if ((int)$me["user_id"] === $id) {
+    j(["ok" => false, "error" => "CANNOT_CHANGE_SELF"], 400);
+}
+
+try {
+    $stmt = $pdo->prepare("UPDATE users SET status = :s WHERE user_id = :id");
+    $stmt->execute([":s" => $status, ":id" => $id]);
+
+    $lvl = ($status === "Active") ? "INFO" : "WARNING";
+    log_event($pdo, $lvl, "Users", "Changed user #{$id} status to {$status}", (int)$me["user_id"]);
+
+    j(["ok" => true]);
+} catch (Throwable $e) {
+    j(["ok" => false, "error" => "STATUS_FAILED", "details" => $e->getMessage()], 500);
+}

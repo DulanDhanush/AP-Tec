@@ -1,116 +1,88 @@
 <?php
-// php/user_save.php
 declare(strict_types=1);
 
-header("Content-Type: application/json; charset=utf-8");
-
-require_once __DIR__ . "/auth.php";
 require_once __DIR__ . "/db.php";
+require_once __DIR__ . "/auth.php";
+require_once __DIR__ . "/logger.php";
 
-// (optional) log
-$loggerPath = __DIR__ . "/logger.php";
-if (file_exists($loggerPath)) require_once $loggerPath;
+$me = require_login_api(["Admin", "Owner"]);
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$admin = require_login("Admin");
-
-$input = json_decode(file_get_contents("php://input"), true) ?? [];
-
-$id       = (int)($input["id"] ?? 0);
-$fullName = trim((string)($input["full_name"] ?? ""));
-$email    = trim((string)($input["email"] ?? ""));
-$role     = trim((string)($input["role"] ?? "Employee"));
-$password = (string)($input["password"] ?? "");
-
-$allowedRoles = ["Employee","Customer","Owner","Admin"];
-if ($fullName === "" || $email === "") {
-    echo json_encode(["ok" => false, "error" => "Name and email required"]);
-    exit;
-}
-if (!in_array($role, $allowedRoles, true)) {
-    echo json_encode(["ok" => false, "error" => "Invalid role"]);
+function j(array $data, int $code = 200): void {
+    http_response_code($code);
+    header("Content-Type: application/json; charset=utf-8");
+    echo json_encode($data);
     exit;
 }
 
-// generate username if creating
-function make_username(string $name): string {
-    $base = strtolower(preg_replace('/[^a-z0-9]+/i', '_', trim($name)));
-    $base = trim($base, "_");
-    if ($base === "") $base = "user";
-    return substr($base, 0, 20);
+$raw = file_get_contents("php://input");
+$body = json_decode($raw ?: "{}", true);
+if (!is_array($body)) j(["ok" => false, "error" => "INVALID_JSON"], 400);
+
+$id        = (int)($body["id"] ?? 0);
+$full_name = trim((string)($body["full_name"] ?? ""));
+$email     = trim((string)($body["email"] ?? ""));
+$role      = trim((string)($body["role"] ?? ""));
+$password  = (string)($body["password"] ?? "");
+
+// validate role against your ENUM
+$allowedRoles = ["Admin","Owner","Employee","Customer"];
+if ($role !== "" && !in_array($role, $allowedRoles, true)) {
+    j(["ok" => false, "error" => "INVALID_ROLE"], 400);
 }
+
+if ($full_name === "" || $email === "") {
+    j(["ok" => false, "error" => "MISSING_FIELDS"], 400);
+}
+
+// Build username from email (simple + stable)
+$username = preg_replace('/[^a-zA-Z0-9_.-]/', '', strtok($email, "@") ?: "user");
+if ($username === "") $username = "user";
 
 try {
-    if ($id > 0) {
-        // UPDATE
+    if ($id <= 0) {
+        // CREATE
+        // status default
         $stmt = $pdo->prepare("
-            UPDATE users
-            SET full_name = :n, email = :e, role = :r
-            WHERE user_id = :id
+            INSERT INTO users (username, full_name, email, password_hash, role, status, created_at)
+            VALUES (:username, :full_name, :email, :pw, :role, 'Active', NOW())
         ");
         $stmt->execute([
-            ":n" => $fullName,
-            ":e" => $email,
-            ":r" => $role,
-            ":id" => $id
+            ":username"  => $username,
+            ":full_name" => $full_name,
+            ":email"     => $email,
+            ":pw"        => ($password !== "" ? $password : "Welcome123"), // plain, as you want
+            ":role"      => ($role !== "" ? $role : "Customer"),
         ]);
 
-        // update password only if provided
-        if ($password !== "") {
-            $stmt2 = $pdo->prepare("UPDATE users SET password_hash = :p WHERE user_id = :id");
-            $stmt2->execute([":p" => $password, ":id" => $id]);
+        $newId = (int)$pdo->lastInsertId();
+
+        // ✅ your log enum is INFO/WARNING/ERROR
+        log_event($pdo, "INFO", "Users", "Created user #{$newId} ({$email})", (int)$me["user_id"]);
+
+        j(["ok" => true, "id" => $newId]);
+    } else {
+        // UPDATE
+        $sets = [];
+        $params = [":id" => $id];
+
+        $sets[] = "full_name = :n"; $params[":n"] = $full_name;
+        $sets[] = "email = :e";     $params[":e"] = $email;
+        if ($role !== "") { $sets[] = "role = :r"; $params[":r"] = $role; }
+
+        // only change password if provided (edit mode)
+        if (trim($password) !== "") {
+            $sets[] = "password_hash = :pw";
+            $params[":pw"] = $password; // plain
         }
 
-        if (function_exists("log_event")) {
-            log_event($pdo, "INFO", "UserMgmt", "Admin {$admin['username']} updated user #{$id}", $admin["user_id"]);
-        }
+        $stmt = $pdo->prepare("UPDATE users SET " . implode(", ", $sets) . " WHERE user_id = :id");
+        $stmt->execute($params);
 
-        echo json_encode(["ok" => true, "message" => "User updated"]);
-        exit;
+        log_event($pdo, "INFO", "Users", "Updated user #{$id} ({$email})", (int)$me["user_id"]);
+
+        j(["ok" => true]);
     }
-
-    // CREATE
-    if ($password === "") $password = "Welcome123";
-
-    // username must be unique
-    $username = make_username($fullName);
-    $try = 0;
-    while (true) {
-        $check = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = :u");
-        $check->execute([":u" => $username]);
-        $exists = (int)$check->fetchColumn();
-        if ($exists === 0) break;
-        $try++;
-        $username = make_username($fullName) . $try;
-        if ($try > 30) { $username = "user" . time(); break; }
-    }
-
-    // email unique
-    $checkEmail = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = :e");
-    $checkEmail->execute([":e" => $email]);
-    if ((int)$checkEmail->fetchColumn() > 0) {
-        echo json_encode(["ok" => false, "error" => "Email already exists"]);
-        exit;
-    }
-
-    $stmt = $pdo->prepare("
-        INSERT INTO users (full_name, username, email, password_hash, role, status, created_at)
-        VALUES (:n, :u, :e, :p, :r, 'Active', NOW())
-    ");
-    $stmt->execute([
-        ":n" => $fullName,
-        ":u" => $username,
-        ":e" => $email,
-        ":p" => $password,
-        ":r" => $role
-    ]);
-
-    $newId = (int)$pdo->lastInsertId();
-
-    if (function_exists("log_event")) {
-        log_event($pdo, "INFO", "UserMgmt", "Admin {$admin['username']} created user #{$newId} ({$username})", $admin["user_id"]);
-    }
-
-    echo json_encode(["ok" => true, "message" => "User created", "id" => $newId, "username" => $username]);
 } catch (Throwable $e) {
-    echo json_encode(["ok" => false, "error" => "Server error"]);
+    j(["ok" => false, "error" => "SAVE_FAILED", "details" => $e->getMessage()], 500);
 }

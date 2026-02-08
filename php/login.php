@@ -52,7 +52,7 @@ session_regenerate_id(true);
 $_SESSION["user_id"]    = (int)$user["user_id"];
 $_SESSION["username"]   = (string)$user["username"];
 $_SESSION["full_name"]  = (string)$user["full_name"];  // ✅ store with clear key
-$_SESSION["role"]       = strtolower(trim((string)$user["role"])); // normalize
+$_SESSION["role"] = (string)$user["role"]; // Admin / Owner / Employee / Customer
 
 $role = $_SESSION["role"];
 

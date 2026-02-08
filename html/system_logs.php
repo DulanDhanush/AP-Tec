@@ -36,7 +36,7 @@ header("Expires: 0");
             </li>
             <li class="nav-item">
                 <a href="user_management.php" class="nav-link">
-                    <i class="fa-solid fa-users"></i> User Mgmt
+                    <i class="fa-solid fa-users"></i> User Management
                 </a>
             </li>
             <li class="nav-item">
