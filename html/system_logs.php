@@ -7,6 +7,11 @@ $u = require_login(["Admin","Owner"]);
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 header("Expires: 0");
+
+// Safe display name
+$displayName = trim((string)(
+    ($u["full_name"] ?? "") ?: ($u["name"] ?? "") ?: ($u["username"] ?? "") ?: "User"
+));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -69,17 +74,18 @@ header("Expires: 0");
                 <h1>System Logs</h1>
                 <p style="color: var(--secondary);">Monitor security events, errors, and user activities in real-time.</p>
             </div>
-          <div class="user-profile">
-  <span><?= htmlspecialchars($u["full_name"] ?: $u["username"] ?: "Admin") ?></span>
-  <div class="user-avatar">
-    <?php
-      $name = $u["full_name"] ?: $u["username"] ?: "Admin";
-      $parts = preg_split('/\s+/', trim($name));
-      $initials = strtoupper(substr($parts[0] ?? 'A', 0, 1) . substr($parts[1] ?? 'D', 0, 1));
-      echo htmlspecialchars($initials);
-    ?>
-  </div>
-</div>
+
+            <div class="user-profile">
+                <span><?= htmlspecialchars($displayName) ?></span>
+                <div class="user-avatar">
+                    <?php
+                        $parts = preg_split('/\s+/', trim($displayName));
+                        $initials = strtoupper(substr($parts[0] ?? 'U', 0, 1) . substr($parts[1] ?? '', 0, 1));
+                        if (strlen($initials) < 2) $initials = strtoupper(substr($displayName, 0, 2));
+                        echo htmlspecialchars($initials);
+                    ?>
+                </div>
+            </div>
         </header>
 
         <div class="filter-bar">
@@ -132,7 +138,7 @@ header("Expires: 0");
     </main>
 </div>
 
-<script src="../js/system_logs.js?v=1"></script>
+<script src="../js/system_logs.js?v=2"></script>
 <script src="../js/dashboard.js"></script>
 </body>
 </html>

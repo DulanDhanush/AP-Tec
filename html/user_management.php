@@ -5,13 +5,29 @@ date_default_timezone_set("Asia/Colombo");
 
 // ✅ protect page
 require_once __DIR__ . "/../php/auth.php";
-$u = require_login(["Admin","Owner"]);
+$u = require_login(["Admin"]);
 
 // ✅ stop browser back cache
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 header("Expires: 0");
+
+// ✅ display name logic (Admin shows username, others show full_name)
+$role = (string)($u["role"] ?? "");
+$displayName = (string)($u["full_name"] ?? "");
+
+if (strcasecmp($role, "Admin") === 0) {
+    $displayName = (string)($u["username"] ?? $displayName);
+}
+if (trim($displayName) === "") {
+    $displayName = (string)($u["username"] ?? "Admin");
+}
+
+$parts = preg_split('/\s+/', trim($displayName));
+$first = $parts[0] ?? "A";
+$second = $parts[1] ?? $first;
+$initials = strtoupper(substr($first, 0, 1) . substr($second, 0, 1));
 ?>
 <!doctype html>
 <html lang="en">
@@ -85,17 +101,12 @@ header("Expires: 0");
             </p>
           </div>
 
-       <div class="user-profile">
-  <span><?= htmlspecialchars($u["full_name"] ?: $u["username"] ?: "Admin") ?></span>
-  <div class="user-avatar">
-    <?php
-      $name = $u["full_name"] ?: $u["username"] ?: "Admin";
-      $parts = preg_split('/\s+/', trim($name));
-      $initials = strtoupper(substr($parts[0] ?? 'A', 0, 1) . substr($parts[1] ?? 'D', 0, 1));
-      echo htmlspecialchars($initials);
-    ?>
-  </div>
-</div>
+          <div class="user-profile">
+            <span><?= htmlspecialchars($displayName) ?></span>
+            <div class="user-avatar">
+              <?= htmlspecialchars($initials) ?>
+            </div>
+          </div>
         </header>
 
         <div class="filter-bar">
