@@ -1,3 +1,8 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . "/../php/auth.php";
+$u = require_login(["customer"]);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
