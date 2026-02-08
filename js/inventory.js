@@ -364,7 +364,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const qty = parseInt(prompt("Enter quantity to add:", "1") || "0", 10);
         if (!qty || qty <= 0) return;
 
-        await api("add_stock", { item_id: id, add_qty: qty });
+        const r = await api("add_stock", { item_id: id, add_qty: qty });
+        console.log("ADD STOCK RESULT:", r);
         await loadAll();
       }
 

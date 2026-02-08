@@ -123,15 +123,30 @@ if ($action === "add_supplier") {
 
 if ($action === "add_stock") {
   $b = body();
-  $itemId = (int)($b["item_id"] ?? 0);
-  $addQty = (int)($b["add_qty"] ?? 0);
 
-  if ($itemId <= 0 || $addQty <= 0) j(["ok"=>false,"error"=>"Invalid item or qty"], 422);
+  $itemId = (int)($b["item_id"] ?? 0);
+
+  // ✅ accept multiple possible keys to avoid mismatch
+  $addQty = (int)($b["add_qty"] ?? $b["qty"] ?? $b["quantity"] ?? 0);
+
+  if ($itemId <= 0 || $addQty <= 0) {
+    j(["ok"=>false, "error"=>"Invalid item_id or quantity"], 422);
+  }
 
   $stmt = $pdo->prepare("UPDATE inventory SET quantity = quantity + :add WHERE item_id = :id");
   $stmt->execute([":add" => $addQty, ":id" => $itemId]);
 
-  j(["ok" => true]);
+  // ✅ if item_id wrong, rowCount will be 0
+  if ($stmt->rowCount() === 0) {
+    j(["ok"=>false, "error"=>"Item not found or no change applied"], 404);
+  }
+
+  // ✅ return updated quantity (so UI can confirm)
+  $q = $pdo->prepare("SELECT quantity FROM inventory WHERE item_id = :id");
+  $q->execute([":id" => $itemId]);
+  $row = $q->fetch();
+
+  j(["ok" => true, "item_id" => $itemId, "new_quantity" => (int)$row["quantity"]]);
 }
 
 if ($action === "request_restock") {
