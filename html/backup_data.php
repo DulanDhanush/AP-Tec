@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . "/../php/auth.php";
 
-// ✅ Only admin can access (use lowercase, array)
+// ✅ Only admin can access (lowercase, array)
 $u = require_login(["admin"]);
 
 // ✅ prefer full_name for display, fallback to username
@@ -16,6 +16,10 @@ $role = (string)($u["role"] ?? "admin");
 $roleLabel = ucfirst(strtolower($role));
 $avatarLetter = strtoupper(mb_substr(trim($displayName), 0, 1, "UTF-8"));
 if ($avatarLetter === "") $avatarLetter = "U";
+
+function h(string $s): string {
+  return htmlspecialchars($s, ENT_QUOTES, "UTF-8");
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -23,6 +27,7 @@ if ($avatarLetter === "") $avatarLetter = "U";
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Backup & Restore | AP Tec</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="../css/style.css" />
@@ -40,6 +45,10 @@ if ($avatarLetter === "") $avatarLetter = "U";
       .upload-zone:hover {
         border-color: var(--primary);
         background: rgba(100, 255, 218, 0.05);
+      }
+      .upload-zone.dragover {
+        border-color: var(--primary);
+        background: rgba(100, 255, 218, 0.08);
       }
       .progress-bar-container {
         width: 100%;
@@ -111,13 +120,13 @@ if ($avatarLetter === "") $avatarLetter = "U";
           <!-- ✅ Dynamic logged-in user -->
           <div class="user-profile">
             <div>
-              <span id="uiUserName"><?= htmlspecialchars($displayName) ?></span><br />
+              <span id="uiUserName"><?= h($displayName) ?></span><br />
               <small id="uiUserRole" style="color: var(--secondary)">
-                <?= htmlspecialchars($roleLabel) ?>
+                <?= h($roleLabel) ?>
               </small>
             </div>
             <div class="user-avatar" id="uiUserAvatar">
-              <?= htmlspecialchars($avatarLetter) ?>
+              <?= h($avatarLetter) ?>
             </div>
           </div>
         </header>
@@ -143,7 +152,8 @@ if ($avatarLetter === "") $avatarLetter = "U";
               </h2>
             </div>
 
-            <button id="btnCreateBackup" class="btn btn-primary" style="width: 100%">
+            <!-- ✅ IMPORTANT: type="button" prevents submit double-trigger -->
+            <button id="btnCreateBackup" type="button" class="btn btn-primary" style="width: 100%">
               <i class="fa-solid fa-cloud-arrow-down"></i> Create New Backup
             </button>
 
@@ -163,16 +173,20 @@ if ($avatarLetter === "") $avatarLetter = "U";
 
             <input type="file" id="fileRestore" style="display:none" accept=".sql,.zip" />
 
-            <div class="upload-zone">
+            <div class="upload-zone" id="uploadZone">
               <i class="fa-solid fa-cloud-arrow-up" style="font-size:2rem; color:var(--secondary); margin-bottom:10px;"></i>
               <h3 style="color:white; font-size:1rem">Click to Upload</h3>
               <p style="color:var(--secondary); font-size:0.8rem">
                 or drag and drop .sql files here
               </p>
+              <p id="selectedFileText" style="color:var(--secondary); font-size:0.8rem; margin-top:12px;">
+                No file selected
+              </p>
             </div>
 
             <div style="margin-top: 20px; text-align: right">
-              <button id="btnRestore" class="btn btn-danger" style="padding: 10px 20px">
+              <!-- ✅ IMPORTANT: type="button" prevents submit double-trigger -->
+              <button id="btnRestore" type="button" class="btn btn-danger" style="padding: 10px 20px">
                 <i class="fa-solid fa-rotate-left"></i> Restore System
               </button>
             </div>
@@ -214,7 +228,7 @@ if ($avatarLetter === "") $avatarLetter = "U";
         <div class="wide-widget" style="height:auto; min-height:400px; grid-column: span 4">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h3 style="color:white">Backup History</h3>
-            <button class="btn-glass"><i class="fa-solid fa-filter"></i> Filter</button>
+            <button type="button" class="btn-glass"><i class="fa-solid fa-filter"></i> Filter</button>
           </div>
 
           <table class="table-responsive">
@@ -250,6 +264,37 @@ if ($avatarLetter === "") $avatarLetter = "U";
         if (n) n.textContent = name;
         if (r) r.textContent = role;
         if (a) a.textContent = name ? name.trim().charAt(0).toUpperCase() : "U";
+
+        // Small UX: make upload zone open file picker
+        const zone = document.getElementById("uploadZone");
+        const inp  = document.getElementById("fileRestore");
+        const txt  = document.getElementById("selectedFileText");
+
+        if (zone && inp) {
+          zone.addEventListener("click", () => inp.click());
+
+          zone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            zone.classList.add("dragover");
+          });
+
+          zone.addEventListener("dragleave", () => {
+            zone.classList.remove("dragover");
+          });
+
+          zone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            zone.classList.remove("dragover");
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+              inp.files = e.dataTransfer.files;
+              if (txt) txt.textContent = inp.files[0].name;
+            }
+          });
+
+          inp.addEventListener("change", () => {
+            if (txt) txt.textContent = inp.files && inp.files[0] ? inp.files[0].name : "No file selected";
+          });
+        }
       })();
     </script>
   </body>

@@ -1,5 +1,9 @@
 // js/backup.js
 (function () {
+  // ✅ Prevent double-binding even if script is included twice
+  if (window.__backupJsBound) return;
+  window.__backupJsBound = true;
+
   const btnCreate = document.getElementById("btnCreateBackup");
   const btnRestore = document.getElementById("btnRestore");
   const fileRestore = document.getElementById("fileRestore");
@@ -9,12 +13,15 @@
   const backupStatus = document.getElementById("backupStatus");
   const tableBody = document.querySelector("table.table-responsive tbody");
 
+  let creating = false;
+  let restoring = false;
+
   // --- show selected filename in the square ---
   function updateUploadZoneLabel(file) {
     if (!uploadZone) return;
 
     const title = uploadZone.querySelector("h3");
-    const sub = uploadZone.querySelector("p");
+    const sub = uploadZone.querySelector("p"); // first <p> in zone
 
     if (file) {
       if (title) title.textContent = "Selected File";
@@ -25,27 +32,33 @@
     }
   }
 
-  // Upload zone logic (single clean block)
+  // Upload zone logic
   if (uploadZone && fileRestore) {
-    uploadZone.addEventListener("click", () => fileRestore.click());
+    if (!uploadZone.dataset.bound) {
+      uploadZone.dataset.bound = "1";
 
-    fileRestore.addEventListener("change", () => {
-      const file = fileRestore.files && fileRestore.files[0];
-      updateUploadZoneLabel(file);
-    });
+      uploadZone.addEventListener("click", () => fileRestore.click());
 
-    uploadZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-    });
-
-    uploadZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (file) {
-        fileRestore.files = e.dataTransfer.files;
+      fileRestore.addEventListener("change", () => {
+        const file = fileRestore.files && fileRestore.files[0];
         updateUploadZoneLabel(file);
-      }
-    });
+      });
+
+      uploadZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+
+      uploadZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const file =
+          e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) {
+          // NOTE: assigning FileList is not supported in all browsers, but works in most modern ones
+          fileRestore.files = e.dataTransfer.files;
+          updateUploadZoneLabel(file);
+        }
+      });
+    }
   }
 
   function fmtBytes(bytes) {
@@ -75,6 +88,7 @@
   async function apiGet(action) {
     return fetch(`../php/backup_api.php?action=${encodeURIComponent(action)}`, {
       credentials: "include",
+      cache: "no-store",
     });
   }
 
@@ -92,6 +106,7 @@
     return fetch(`../php/backup_api.php?action=${encodeURIComponent(action)}`, {
       method: "POST",
       credentials: "include",
+      cache: "no-store",
       headers,
       body,
     });
@@ -126,10 +141,10 @@
         <td><span class="status-badge status-active">${statusText}</span></td>
         <td>
           <div class="action-buttons">
-            <button class="btn-icon btn-view" title="Download" data-download="${it.id}">
+            <button type="button" class="btn-icon btn-view" title="Download" data-download="${it.id}">
               <i class="fa-solid fa-download"></i>
             </button>
-            <button class="btn-icon btn-delete" title="Delete" data-delete="${it.id}">
+            <button type="button" class="btn-icon btn-delete" title="Delete" data-delete="${it.id}">
               <i class="fa-solid fa-trash"></i>
             </button>
           </div>
@@ -139,17 +154,25 @@
       tableBody.appendChild(tr);
     });
 
-    // bind actions
+    // bind actions (safe)
     tableBody.querySelectorAll("[data-download]").forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = "1";
+
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-download");
-        window.location.href = `../php/backup_api.php?action=download&id=${encodeURIComponent(id)}`;
+        window.location.href = `../php/backup_api.php?action=download&id=${encodeURIComponent(id || "")}`;
       });
     });
 
     tableBody.querySelectorAll("[data-delete]").forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = "1";
+
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-delete");
+        if (!id) return;
+
         if (!confirm("Delete this backup?")) return;
 
         const res = await apiPost("delete", { id });
@@ -184,30 +207,44 @@
   }
 
   // Create backup
-  if (btnCreate) {
-    btnCreate.addEventListener("click", async () => {
+  if (btnCreate && !btnCreate.dataset.bound) {
+    btnCreate.dataset.bound = "1";
+
+    btnCreate.addEventListener("click", async (e) => {
+      e.preventDefault(); // extra safety
+      if (creating) return;
+
+      creating = true;
       btnCreate.disabled = true;
       setStatus("Backing up...", true);
 
-      const res = await apiGet("create");
-      const data = await res.json().catch(() => ({}));
+      try {
+        const res = await apiGet("create");
+        const data = await res.json().catch(() => ({}));
 
-      btnCreate.disabled = false;
+        if (!res.ok || !data.ok) {
+          setStatus("Failed", false);
+          alert(data.message || "Backup failed");
+          return;
+        }
 
-      if (!res.ok || !data.ok) {
-        setStatus("Failed", false);
-        alert(data.message || "Backup failed");
-        return;
+        alert(data.message || "Backup completed");
+        await refresh();
+      } finally {
+        btnCreate.disabled = false;
+        creating = false;
       }
-
-      alert(data.message || "Backup completed");
-      await refresh();
     });
   }
 
   // Restore
-  if (btnRestore && fileRestore) {
-    btnRestore.addEventListener("click", async () => {
+  if (btnRestore && fileRestore && !btnRestore.dataset.bound) {
+    btnRestore.dataset.bound = "1";
+
+    btnRestore.addEventListener("click", async (e) => {
+      e.preventDefault(); // extra safety
+      if (restoring) return;
+
       const f = fileRestore.files && fileRestore.files[0];
       if (!f) {
         alert("Please upload a .sql file first.");
@@ -216,26 +253,30 @@
       if (!confirm("Restore will overwrite current database data. Continue?"))
         return;
 
+      restoring = true;
       btnRestore.disabled = true;
       setStatus("Restoring...", true);
 
-      const fd = new FormData();
-      fd.append("file", f);
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
 
-      const res = await apiPost("restore", fd);
-      const data = await res.json().catch(() => ({}));
+        const res = await apiPost("restore", fd);
+        const data = await res.json().catch(() => ({}));
 
-      btnRestore.disabled = false;
+        if (!res.ok || !data.ok) {
+          setStatus("Restore Failed", false);
+          alert(data.message || "Restore failed");
+          return;
+        }
 
-      if (!res.ok || !data.ok) {
-        setStatus("Restore Failed", false);
-        alert(data.message || "Restore failed");
-        return;
+        alert(data.message || "Restored successfully");
+        setStatus("Secure", true);
+        await refresh();
+      } finally {
+        btnRestore.disabled = false;
+        restoring = false;
       }
-
-      alert(data.message || "Restored successfully");
-      setStatus("Secure", true);
-      await refresh();
     });
   }
 
