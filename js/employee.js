@@ -1,276 +1,351 @@
-// js/employee.js
-(() => {
-  // DB stores status text exactly like these:
-  const STATUS_MAP = {
-    Pending: "Pending",
-    "In Progress": "In Progress",
-    Completed: "Completed",
-    "Waiting for Parts": "Waiting for Parts",
-    Cancelled: "Cancelled",
-  };
+/* js/employee.js - Real Data Dashboard */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const api = "../php/employee_dashboard_api.php";
 
   const taskGrid = document.getElementById("taskGrid");
-  const tabBtns = document.querySelectorAll(".tab-btn");
+  const routeTimeline = document.getElementById("routeTimeline");
+  const reqError = document.getElementById("reqError");
+
+  const msgBadge = document.getElementById("msgBadge");
+  const userName = document.getElementById("userName");
+
   const availBtn = document.getElementById("availBtn");
   const statusText = document.getElementById("statusText");
+  const statusDot = availBtn ? availBtn.querySelector(".status-dot") : null;
+
+  const tabBtns = document.querySelectorAll(".tab-btn");
 
   // modal
   const modal = document.getElementById("taskModal");
-  const closeModalBtn = modal?.querySelector(".close-modal");
-  const cancelBtn = modal?.querySelector(".btn-cancel");
-  const form = modal?.querySelector("form");
-
-  const modalTaskTitle = document.getElementById("modalTaskTitle");
+  const closeModalBtn = modal.querySelector(".close-modal");
+  const cancelBtn = document.getElementById("modalCancelBtn");
+  const modalTitle = document.getElementById("modalTaskTitle");
   const modalTaskId = document.getElementById("modalTaskId");
-  const selStatus = modal?.querySelector("select.modal-input");
-  const txtNotes = modal?.querySelector("textarea.modal-input");
+  const modalTaskDbId = document.getElementById("modalTaskDbId");
+  const modalStatus = document.getElementById("modalStatus");
+  const modalNotes = document.getElementById("modalNotes");
   const proofUpload = document.getElementById("proofUpload");
   const proofPreview = document.getElementById("proofPreview");
+  const modalError = document.getElementById("modalError");
+  const taskUpdateForm = document.getElementById("taskUpdateForm");
 
+  let allTasks = [];
   let currentFilter = "all";
-  let activeTask = null;
 
-  function escapeHtml(s) {
+  function showError(msg) {
+    reqError.style.display = "block";
+    reqError.textContent = msg;
+  }
+  function hideError() {
+    reqError.style.display = "none";
+    reqError.textContent = "";
+  }
+
+  function esc(s) {
     return String(s ?? "")
       .replaceAll("&", "&amp;")
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+      .replaceAll('"', "&quot;");
   }
 
-  async function apiGet(action, params = {}) {
-    const url = new URL("../php/employee_api.php", window.location.href);
-    url.searchParams.set("action", action);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-
-    const res = await fetch(url.toString(), { credentials: "include" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) throw new Error(data.message || "Request failed");
-    return data;
+  function toFilterKey(status) {
+    // DB values: Pending, In Progress, Waiting for Parts, Completed, Cancelled
+    if (status === "Pending") return "pending";
+    if (status === "In Progress") return "progress";
+    if (status === "Waiting for Parts") return "waiting_parts";
+    if (status === "Completed") return "completed";
+    return "all";
   }
 
-  async function apiPostForm(action, formData) {
-    const url = new URL("../php/employee_api.php", window.location.href);
-    url.searchParams.set("action", action);
-
-    const res = await fetch(url.toString(), {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) throw new Error(data.message || "Request failed");
-    return data;
+  function priorityClass(priority) {
+    // UI has priority-high/med/low – map
+    if (priority === "Urgent" || priority === "High") return "priority-high";
+    if (priority === "Normal") return "priority-med";
+    return "priority-low";
   }
 
-  // DB priority values: Low, Normal, High, Urgent
-  function mapPriorityClass(p) {
-    const x = String(p || "").toLowerCase();
-    if (x === "urgent" || x === "high") return "priority-high";
-    if (x === "low") return "priority-low";
-    return "priority-med"; // Normal
+  function badgeForStatusOrPriority(task) {
+    // Keep your design style: show priority badge for Urgent, else show status
+    if (task.priority === "Urgent") {
+      return `<span class="status-badge" style="background: rgba(231,76,60,0.1); color:#e74c3c;">Urgent</span>`;
+    }
+    if (task.status === "Completed") {
+      return `<span class="status-badge status-active">Done</span>`;
+    }
+    if (task.status === "In Progress") {
+      return `<span class="status-badge status-pending">In Progress</span>`;
+    }
+    if (task.status === "Waiting for Parts") {
+      return `<span class="status-badge" style="background: rgba(241,196,15,0.15); color:#f1c40f;">Waiting</span>`;
+    }
+    return `<span class="status-badge" style="background: rgba(52,152,219,0.12); color:#3498db;">Pending</span>`;
   }
 
-  // DB status values are Title Case strings
-  function mapStatusBadge(status) {
-    const s = String(status || "").toLowerCase();
-
-    if (s === "completed") return { label: "Done", badge: "status-active" };
-    if (s === "pending") return { label: "Pending", badge: "status-pending" };
-    if (s === "in progress")
-      return { label: "In Progress", badge: "status-pending" };
-    if (s === "waiting for parts")
-      return { label: "Waiting for Parts", badge: "status-pending" };
-    if (s === "cancelled")
-      return { label: "Cancelled", badge: "status-pending" };
-
-    return { label: status, badge: "status-pending" };
+  function formatDue(dueDateStr) {
+    if (!dueDateStr) return "No due date";
+    // show YYYY-MM-DD for now (simple + reliable)
+    return dueDateStr;
   }
 
-  // due_date is DATE (YYYY-MM-DD)
-  function dueLabel(dueDate) {
-    if (!dueDate) return "";
-    const d = new Date(String(dueDate) + "T00:00:00");
-    if (isNaN(d.getTime())) return String(dueDate);
-    return d.toLocaleDateString([], {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  }
-
-  function openModal(task) {
-    activeTask = task;
-
-    modalTaskTitle.textContent = task.title || "Task";
-    // ✅ your DB uses task_reference
-    modalTaskId.textContent = "#" + (task.task_reference || "");
-
-    // ✅ task.status already matches dropdown values
-    // ensure option exists
-    const st = task.status || "Pending";
-    selStatus.value = STATUS_MAP[st] ? st : "Pending";
-
-    // preload existing notes (optional)
-    txtNotes.value = task.technician_notes || "";
-    proofUpload.value = "";
-    proofPreview.textContent = "";
-
-    modal.classList.add("active");
-    modal.style.display = "flex";
-  }
-
-  function closeModal() {
-    activeTask = null;
-    modal.classList.remove("active");
-    modal.style.display = "none";
-  }
-
-  function renderTasks(items) {
+  function renderTasks() {
     taskGrid.innerHTML = "";
 
-    if (!items.length) {
-      taskGrid.innerHTML = `<div style="color: var(--secondary); padding: 10px;">No tasks found.</div>`;
+    const filtered = allTasks.filter((t) => {
+      if (currentFilter === "all") return true;
+      return toFilterKey(t.status) === currentFilter;
+    });
+
+    if (filtered.length === 0) {
+      taskGrid.innerHTML = `
+        <div style="color: var(--secondary); padding: 20px;">
+          No tasks found for this filter.
+        </div>
+      `;
       return;
     }
 
-    items.forEach((t) => {
-      const priClass = mapPriorityClass(t.priority);
-      const st = mapStatusBadge(t.status);
-
-      // ✅ your API returns due_date (DATE)
-      const due = dueLabel(t.due_date);
-
-      const loc = t.location || "";
-      const desc = t.description || "";
-      const cust = t.customer_name ? ` - ${t.customer_name}` : "";
-
+    for (const t of filtered) {
       const card = document.createElement("div");
-      card.className = `task-card ${priClass}`;
-      card.dataset.status = t.status;
+      card.className = `task-card ${priorityClass(t.priority)}`;
+      card.dataset.status = toFilterKey(t.status);
 
       card.innerHTML = `
         <div class="task-header">
-          <span class="task-id">#${escapeHtml(t.task_reference || "")}</span>
-          <span class="status-badge ${escapeHtml(st.badge)}">${escapeHtml(st.label)}</span>
+          <span class="task-id">#${esc(t.task_reference || "TASK-" + t.task_id)}</span>
+          ${badgeForStatusOrPriority(t)}
         </div>
 
-        <h3 style="color: white; font-size: 1.1rem; margin-bottom: 5px;">
-          ${escapeHtml(t.title)}
+        <h3 style="color:white; font-size:1.1rem; margin-bottom:5px;">
+          ${esc(t.title)}
         </h3>
 
         <p style="color: var(--secondary); font-size: 0.9rem; margin-bottom: 15px;">
           <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i>
-          ${escapeHtml(loc)}${escapeHtml(cust)}
+          ${esc(t.location || t.customer_name || "Unknown location")}
         </p>
 
         <p style="color: var(--text-dim); font-size: 0.85rem;">
-          ${escapeHtml(desc)}
+          ${esc(t.description || "")}
         </p>
 
         <div class="task-meta">
-          <span>${due ? `<i class="fa-regular fa-clock"></i> Due: ${escapeHtml(due)}` : ""}</span>
+          <span><i class="fa-regular fa-clock"></i> Due: ${esc(formatDue(t.due_date))}</span>
           <button class="btn-icon btn-edit btn-update-task" title="Update Status">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
         </div>
       `;
 
-      card
-        .querySelector(".btn-update-task")
-        .addEventListener("click", () => openModal(t));
+      const btn = card.querySelector(".btn-update-task");
+      btn.addEventListener("click", () => openModal(t));
+
       taskGrid.appendChild(card);
-    });
-  }
-
-  async function loadTasks() {
-    const data = await apiGet("list_tasks", { filter: currentFilter });
-    renderTasks(data.items || []);
-  }
-
-  // Tabs (your HTML uses data-filter="progress" etc.)
-  tabBtns.forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      currentFilter = btn.dataset.filter || "all";
-      await loadTasks();
-    });
-  });
-
-  // Availability
-  async function loadAvailability() {
-    const data = await apiGet("get_availability");
-    const is = Number(data.is_available || 0) === 1;
-    statusText.textContent = is ? "Available" : "Busy";
-    statusText.style.color = is ? "#2ecc71" : "#e74c3c";
-  }
-
-  availBtn?.addEventListener("click", async () => {
-    const isNowAvailable =
-      statusText.textContent.trim().toLowerCase() !== "available";
-    try {
-      await apiPostForm(
-        "set_availability",
-        new URLSearchParams({ is_available: isNowAvailable ? "1" : "0" }),
-      );
-      await loadAvailability();
-    } catch (e) {
-      alert(e.message || "Availability update failed");
     }
-  });
+  }
 
-  // Proof preview
-  proofUpload?.addEventListener("change", () => {
-    const f = proofUpload.files?.[0];
-    proofPreview.textContent = f ? `Selected: ${f.name}` : "";
-  });
+  function renderRoute(events) {
+    routeTimeline.innerHTML = "";
 
-  // Modal events
-  closeModalBtn?.addEventListener("click", closeModal);
-  cancelBtn?.addEventListener("click", closeModal);
-  modal?.addEventListener("click", (e) => {
+    if (!events || events.length === 0) {
+      routeTimeline.innerHTML = `
+        <div style="color: var(--secondary); font-size: 0.9rem;">
+          No route items for today.
+        </div>
+      `;
+      return;
+    }
+
+    events.forEach((e, idx) => {
+      const time = e.start_time ? e.start_time.slice(0, 5) : "--:--";
+      const ampm = e.start_time
+        ? new Date(`1970-01-01T${e.start_time}`).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : time;
+
+      const item = document.createElement("div");
+      item.className = "timeline-item";
+      item.innerHTML = `
+        <div class="timeline-dot ${idx === 0 ? "active" : ""}"></div>
+        <div class="timeline-time">${esc(ampm)}</div>
+        <div class="timeline-content">
+          <div style="color:white; font-weight:600;">${esc(e.title)}</div>
+          <div style="color: var(--secondary); font-size: 0.8rem;">${esc(e.location || "")}</div>
+        </div>
+      `;
+      routeTimeline.appendChild(item);
+    });
+  }
+
+  function setAvailabilityUI(isAvail) {
+    if (!statusDot) return;
+    if (isAvail) {
+      statusText.textContent = "Available";
+      statusText.style.color = "#2ecc71";
+      statusDot.style.background = "#2ecc71";
+    } else {
+      statusText.textContent = "Busy";
+      statusText.style.color = "#e67e22";
+      statusDot.style.background = "#e67e22";
+    }
+  }
+
+  function openModal(task) {
+    modalError.style.display = "none";
+    modalError.textContent = "";
+
+    modal.style.display = "flex";
+    modalTitle.textContent = task.title || "Task";
+    modalTaskId.textContent =
+      "#" + (task.task_reference || "TASK-" + task.task_id);
+    modalTaskDbId.value = task.task_id;
+
+    modalStatus.value = task.status || "Pending";
+    modalNotes.value = task.technician_notes || "";
+    proofUpload.value = "";
+    proofPreview.textContent = task.proof_image_path
+      ? `Current: ${task.proof_image_path}`
+      : "";
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  closeModalBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
     if (e.target === modal) closeModal();
   });
 
-  // Submit update
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!activeTask) return;
+  proofUpload.addEventListener("change", () => {
+    if (!proofUpload.files || proofUpload.files.length === 0) {
+      proofPreview.textContent = "";
+      return;
+    }
+    proofPreview.textContent = `Selected: ${proofUpload.files[0].name}`;
+  });
 
-    // ✅ Send EXACT DB status text
-    const label = selStatus.value;
-    const statusToSend = STATUS_MAP[label] ? label : "Pending";
+  taskUpdateForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    modalError.style.display = "none";
+    modalError.textContent = "";
+
+    const taskId = parseInt(modalTaskDbId.value || "0", 10);
+    const status = modalStatus.value;
+    const notes = modalNotes.value;
 
     const fd = new FormData();
-    fd.append("task_id", String(activeTask.task_id));
-    fd.append("status", statusToSend);
-    fd.append("notes", txtNotes.value || "");
+    fd.append("task_id", String(taskId));
+    fd.append("status", status);
+    fd.append("notes", notes);
 
-    const file = proofUpload.files?.[0];
-    if (file) fd.append("proof", file);
+    if (proofUpload.files && proofUpload.files[0]) {
+      fd.append("proof", proofUpload.files[0]);
+    }
 
     try {
-      await apiPostForm("update_task", fd);
+      const res = await fetch(`${api}?action=update_task`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        modalError.style.display = "block";
+        modalError.textContent = data.message || "Update failed";
+        return;
+      }
+
       closeModal();
-      await loadTasks();
+      await loadTasks(); // refresh
     } catch (err) {
-      alert(err.message || "Update failed");
+      modalError.style.display = "block";
+      modalError.textContent = "Network error";
     }
   });
 
-  // Init
-  (async () => {
+  tabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter || "all";
+      renderTasks();
+    });
+  });
+
+  availBtn.addEventListener("click", async () => {
+    // toggle current UI state
+    const isNowAvail =
+      statusText.textContent.trim().toLowerCase() !== "available";
     try {
-      await loadAvailability();
-      await loadTasks();
-    } catch (e) {
-      console.error(e);
-      if (taskGrid) {
-        taskGrid.innerHTML = `<div style="color:#e74c3c; padding:10px;">${escapeHtml(e.message || "Failed")}</div>`;
+      const fd = new FormData();
+      fd.append("is_available", isNowAvail ? "1" : "0");
+
+      const res = await fetch(`${api}?action=toggle_availability`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showError(data.message || "Availability update failed");
+        return;
       }
+      hideError();
+      setAvailabilityUI(data.is_available === 1);
+    } catch {
+      showError("Network error");
     }
-  })();
-})();
+  });
+
+  async function loadMe() {
+    const res = await fetch(`${api}?action=me`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message || "Request failed");
+
+    const u = data.user;
+    userName.textContent = u.full_name || u.username || "User";
+
+    // messages badge
+    const count = Number(u.unread_messages || 0);
+    if (count > 0) {
+      msgBadge.style.display = "inline-block";
+      msgBadge.textContent = String(count);
+    } else {
+      msgBadge.style.display = "none";
+    }
+
+    setAvailabilityUI(Number(u.is_available || 1) === 1);
+  }
+
+  async function loadTasks() {
+    const res = await fetch(`${api}?action=tasks`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message || "Request failed");
+
+    allTasks = data.tasks || [];
+    renderTasks();
+  }
+
+  async function loadRoute() {
+    const res = await fetch(`${api}?action=route`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message || "Request failed");
+    renderRoute(data.events || []);
+  }
+
+  async function init() {
+    try {
+      hideError();
+      await loadMe();
+      await loadTasks();
+      await loadRoute();
+    } catch (e) {
+      showError(e.message || "Request failed");
+    }
+  }
+
+  init();
+});
