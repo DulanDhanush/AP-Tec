@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AP Tec | Enterprise Solutions</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo">AP TEC.</div>
+      <div class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#contact">Contact</a>
+        <a href="html/login.html" class="btn-login">Login Portal</a>
+      </div>
+    </nav>
+
+    <section id="home" class="hero hidden">
+      <h1 class="hidden">AP TECH.<br /><span>Enterprise Control</span></h1>
+      <p class="hidden">
+        The unified platform for inventory, services, and industrial billing.
+      </p>
+      <a href="html/login.html" class="btn-cta hidden">Access Dashboard</a>
+    </section>
+
+    <section id="features" class="section">
+      <h2 class="section-title hidden">System <span>Capabilities</span></h2>
+
+      <div class="features-grid">
+        <div class="feature-card hidden">
+          <i class="fa-solid fa-boxes-stacked feature-icon"></i>
+          <h3>Smart Inventory</h3>
+          <p>
+            Real-time tracking of supplier contracts and toner usage with
+            automated low-stock alerts.
+          </p>
+        </div>
+
+        <div class="feature-card hidden" style="transition-delay: 100ms">
+          <i class="fa-solid fa-file-invoice-dollar feature-icon"></i>
+          <h3>Automated Billing</h3>
+          <p>
+            Generate precise invoices and track payment history with a single
+            click.
+          </p>
+        </div>
+
+        <div class="feature-card hidden" style="transition-delay: 200ms">
+          <i class="fa-solid fa-users-gear feature-icon"></i>
+          <h3>Service Ops</h3>
+          <p>
+            Assign tasks to technicians, track GPS status, and manage repairs
+            efficiently.
+          </p>
+        </div>
+
+        <div class="feature-card hidden" style="transition-delay: 300ms">
+          <i class="fa-solid fa-chart-pie feature-icon"></i>
+          <h3>BI Reports</h3>
+          <p>
+            Deep data visualization for business intelligence and performance
+            forecasting.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section">
+      <h2 class="section-title hidden">Get In <span>Touch</span></h2>
+
+      <div class="contact-container hidden">
+        <div class="contact-info">
+          <div class="contact-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <span>123 Industrial Zone, Tech City</span>
+          </div>
+          <div class="contact-item">
+            <i class="fa-solid fa-phone"></i>
+            <span>+94 11 234 5678</span>
+          </div>
+          <div class="contact-item">
+            <i class="fa-solid fa-envelope"></i>
+            <span>support@aptec.com</span>
+          </div>
+        </div>
+
+        <div class="contact-form">
+          <!-- ✅ Formspree integration (no UI changes) -->
+          <form action="https://formspree.io/f/mwvnkonp" method="POST">
+            <div class="input-group">
+              <input
+                type="text"
+                class="input-field"
+                name="name"
+                placeholder="Your Name"
+                required
+              />
+            </div>
+            <div class="input-group">
+              <input
+                type="email"
+                class="input-field"
+                name="email"
+                placeholder="Business Email"
+                required
+              />
+            </div>
+            <div class="input-group">
+              <textarea
+                class="input-field"
+                rows="4"
+                name="message"
+                placeholder="Message"
+                required
+              ></textarea>
+            </div>
+
+            <!-- Optional: helps you see which page sent it -->
+            <input type="hidden" name="source" value="AP Tec Landing Page" />
+
+            <button
+              class="btn-cta"
+              type="submit"
+              style="width: 100%; border: none; cursor: pointer"
+            >
+              Send Message
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer
+      style="
+        text-align: center;
+        padding: 20px;
+        color: var(--secondary);
+        font-size: 0.8rem;
+        border-top: 1px solid var(--border-glass);
+      "
+    >
+      &copy; 2026 AP Tec Management Systems. All rights reserved.
+    </footer>
+
+    <script src="js/landing.js"></script>
+  </body>
+</html>

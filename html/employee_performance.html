@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Performance | AP Tec</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-brand"><i class="fa-solid fa-layer-group"></i> AP TEC.</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="owner_dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> BI Reports</a></li>
+                <li class="nav-item"><a href="inventory_suppliers.html" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i> Inventory & Suppliers</a></li>
+                <li class="nav-item"><a href="approvals.html" class="nav-link"><i class="fa-solid fa-file-signature"></i> Approvals</a></li>
+                <li class="nav-item"><a href="employee_performance.html" class="nav-link active"><i class="fa-solid fa-users-gear"></i> Employee Performance</a></li>
+                 <li class="nav-item" style="margin-top: auto;">
+                    <a href="../index.html" class="nav-link logout-btn" style="color: #e74c3c;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Workforce Performance</h1>
+                    <p style="color: var(--secondary);">Technician productivity and customer feedback metrics.</p>
+                </div>
+                <div class="user-profile"><span>Mr. Director</span><div class="user-avatar" style="background: #f1c40f; color: #000;">MD</div></div>
+            </header>
+
+            <div class="dashboard-grid">
+                
+                <div class="stat-card card-gold" style="grid-column: span 2;">
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <div class="user-avatar" style="width: 70px; height: 70px; font-size: 1.5rem; background: #f1c40f; color: black;">JS</div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 style="margin: 0; color: white;">John Smith</h3>
+                                <span style="background: #f1c40f; color: black; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px;">TOP PERFORMER</span>
+                            </div>
+                            <p style="color: var(--secondary); margin-bottom: 5px;">Senior Technician</p>
+                            <div class="star-rating">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <span style="color: white; margin-left: 5px;">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <h3 style="color: white;">42</h3>
+                        <p style="color: var(--secondary); font-size: 0.8rem;">Tasks This Month</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3 style="color: #64ffda;">94%</h3>
+                        <p>On-Time Completion</p>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-stopwatch"></i></div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <h3>8/12</h3>
+                        <p>Technicians Active</p>
+                    </div>
+                    <div class="stat-icon"><i class="fa-solid fa-helmet-safety"></i></div>
+                </div>
+            </div>
+
+            <div class="wide-widget" style="grid-column: span 4; height: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: white;">Technician Roster</h3>
+                    <div style="display: flex; gap: 10px;">
+                         <button class="btn-glass"><i class="fa-solid fa-filter"></i> Filter</button>
+                         <button class="btn-primary"><i class="fa-solid fa-download"></i> Export Report</button>
+                    </div>
+                </div>
+
+                <table class="table-responsive">
+                    <thead>
+                        <tr>
+                            <th>Technician</th>
+                            <th>Current Status</th>
+                            <th>Skills / Expertise</th>
+                            <th>Tasks (Mo)</th>
+                            <th>Avg Rating</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem;">JS</div>
+                                    <span style="color: white; font-weight: 600;">John Smith</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-active">On Job</span></td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <span class="skill-tag">Hardware</span>
+                                    <span class="skill-tag">Networks</span>
+                                </div>
+                            </td>
+                            <td style="color: var(--primary); font-weight: bold;">42</td>
+                            <td>
+                                <div class="star-rating">
+                                    <i class="fa-solid fa-star"></i> 5.0
+                                </div>
+                            </td>
+                            <td><button class="btn-icon btn-view"><i class="fa-solid fa-eye"></i></button></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background: #8e44ad;">MW</div>
+                                    <span style="color: white; font-weight: 600;">Mike Williams</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge status-pending">Available</span></td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <span class="skill-tag">Printers</span>
+                                    <span class="skill-tag">Refills</span>
+                                </div>
+                            </td>
+                            <td style="color: white;">28</td>
+                            <td>
+                                <div class="star-rating">
+                                    <i class="fa-solid fa-star"></i> 4.8
+                                </div>
+                            </td>
+                            <td><button class="btn-icon btn-view"><i class="fa-solid fa-eye"></i></button></td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background: #e74c3c;">SD</div>
+                                    <span style="color: white; font-weight: 600;">Sarah Davis</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge" style="background: rgba(231,76,60,0.2); color: #e74c3c;">On Leave</span></td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <span class="skill-tag">Software</span>
+                                    <span class="skill-tag">OS</span>
+                                </div>
+                            </td>
+                            <td style="color: white;">15</td>
+                            <td>
+                                <div class="star-rating">
+                                    <i class="fa-solid fa-star"></i> 4.9
+                                </div>
+                            </td>
+                            <td><button class="btn-icon btn-view"><i class="fa-solid fa-eye"></i></button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="wide-widget" style="grid-column: span 4; height: auto;">
+                <h3 style="color: white; margin-bottom: 20px;">Recent Customer Feedback</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                    <div class="notif-item">
+                        <div class="notif-icon icon-success"><i class="fa-solid fa-thumbs-up"></i></div>
+                        <div class="notif-content">
+                            <h4 style="display: flex; justify-content: space-between;">
+                                Alpha Corp <span class="star-rating"><i class="fa-solid fa-star"></i> 5.0</span>
+                            </h4>
+                            <p>"John was extremely quick with the server repair. Very professional service!"</p>
+                            <p style="color: var(--text-dim); font-size: 0.75rem; margin-top: 5px;">Technician: John Smith</p>
+                        </div>
+                    </div>
+
+                    <div class="notif-item">
+                        <div class="notif-icon" style="background: rgba(241, 196, 15, 0.1); color: #f1c40f;"><i class="fa-solid fa-minus"></i></div>
+                        <div class="notif-content">
+                            <h4 style="display: flex; justify-content: space-between;">
+                                Beta Industries <span class="star-rating"><i class="fa-solid fa-star"></i> 4.0</span>
+                            </h4>
+                            <p>"Good service, but the technician arrived 10 minutes late due to traffic."</p>
+                            <p style="color: var(--text-dim); font-size: 0.75rem; margin-top: 5px;">Technician: Mike Williams</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    <script src="../js/dashboard.js"></script>
+</body>
+</html>

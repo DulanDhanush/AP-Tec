@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Center | AP Tec</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    
+    <style>
+        .wide-widget, .table-responsive { overflow: visible !important; }
+        .action-container { position: relative; }
+        .action-menu { 
+            position: absolute; right: 0; top: 100%; z-index: 9999; 
+            width: 170px; background: #0d2c4d; border: 1px solid #64ffda;
+            display: none; flex-direction: column; border-radius: 8px; padding: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .action-menu.active { display: flex; animation: fadeIn 0.2s ease; }
+        .action-item { 
+            background: none; border: none; color: white; padding: 10px; 
+            text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            font-size: 0.85rem; width: 100%;
+        }
+        .action-item:hover { background: rgba(100, 255, 218, 0.1); color: #64ffda; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-brand"><i class="fa-solid fa-layer-group"></i> AP TEC.</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="customer_dashboard.html" class="nav-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+                <li class="nav-item"><a href="customer_orders.html" class="nav-link"><i class="fa-solid fa-box-open"></i> My Orders</a></li>
+                <li class="nav-item"><a href="customer_invoices.html" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i> Invoices</a></li>
+                <li class="nav-item"><a href="customer_support.html" class="nav-link active"><i class="fa-solid fa-headset"></i> Support</a></li>
+                 <li class="nav-item" style="margin-top: auto;">
+                    <a href="../index.html" class="nav-link logout-btn" style="color: #e74c3c;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1>Support Center</h1>
+                    <p style="color: var(--secondary);">Track issues and find quick answers.</p>
+                </div>
+                <div class="user-profile"><span>Alpha Corp</span><div class="user-avatar" style="background: #8e44ad;">AC</div></div>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-info"><h3>1</h3><p>Open Tickets</p></div>
+                    <div class="stat-icon" style="color: #f39c12;"><i class="fa-solid fa-ticket"></i></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info"><h3 style="color: #64ffda;">2h 15m</h3><p>Avg. Response</p></div>
+                    <div class="stat-icon"><i class="fa-solid fa-stopwatch"></i></div>
+                </div>
+
+                <div class="wide-widget" style="grid-column: span 2; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <h3 style="color: white; margin-bottom: 5px;">Need urgent help?</h3>
+                        <p style="color: var(--secondary); font-size: 0.9rem;">Technicians available 24/7.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        
+                        <button class="btn btn-primary trigger-live-chat"><i class="fa-solid fa-comments"></i> Live Chat</button>
+                    </div>
+                </div>
+
+                <div class="wide-widget" style="grid-column: span 3; height: auto; overflow: visible !important;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <h3 style="color: white;">Ticket History</h3>
+                        <button class="btn btn-primary" onclick="openModal('createTicketModal')" style="padding: 8px 20px;">
+                            <i class="fa-solid fa-plus"></i> Open Ticket
+                        </button>
+                    </div>
+
+                    <table class="table-responsive" style="overflow: visible !important;">
+                        <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Subject</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="font-mono">#TCK-9923</td>
+                                <td>Server Room Overheating</td>
+                                <td>Feb 07, 2026</td>
+                                <td><span class="status-badge status-pending">In Progress</span></td>
+                                <td style="position: relative; overflow: visible;">
+                                    <div class="action-container">
+                                        <button class="btn-icon btn-trigger-menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        <div class="action-menu">
+                                            <button class="action-item" onclick="openModal('viewTicketModal')"><i class="fa-solid fa-eye"></i> View Details</button>
+                                            <button class="action-item" onclick="openModal('editTicketModal')"><i class="fa-solid fa-pen"></i> Edit Info</button>
+                                            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0;"></div>
+                                            <button class="action-item" onclick="openModal('deleteModal')" style="color: #e74c3c;"><i class="fa-solid fa-trash"></i> Cancel</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                             <tr>
+                                <td class="font-mono">#TCK-9801</td>
+                                <td>Printer Not Connecting</td>
+                                <td>Jan 15, 2026</td>
+                                <td><span class="status-badge status-active">Resolved</span></td>
+                                <td style="position: relative; overflow: visible;">
+                                    <div class="action-container">
+                                        <button class="btn-icon btn-trigger-menu"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                                        <div class="action-menu">
+                                            <button class="action-item" onclick="openModal('viewTicketModal')"><i class="fa-solid fa-eye"></i> View Details</button>
+                                            <button class="action-item"><i class="fa-solid fa-download"></i> Archive</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="wide-widget" style="grid-column: span 1; height: auto;">
+                    <h3 style="color: white; margin-bottom: 20px;">FAQs</h3>
+                    <div class="accordion-item">
+                        <div class="accordion-header"><span class="accordion-title">How to reset printer?</span><i class="fa-solid fa-chevron-down accordion-icon"></i></div>
+                        <div class="accordion-body">Turn off printer. Hold "Resume" for 5s.</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="createTicketModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeModal('createTicketModal')"></i>
+            <div class="modal-header"><h2>Open Ticket</h2><p style="color: var(--secondary);">Describe issue.</p></div>
+            <form>
+                <div class="form-group"><label class="form-label" style="color:var(--secondary)">Subject</label><input type="text" class="modal-input"></div>
+                <div class="form-group"><label class="form-label" style="color:var(--secondary)">Description</label><textarea class="modal-input" rows="4"></textarea></div>
+                <div style="display:flex; gap:15px; margin-top:20px;">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('createTicketModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editTicketModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeModal('editTicketModal')"></i>
+            <div class="modal-header"><h2>Edit Ticket</h2><p style="color: var(--secondary);">ID: #TCK-9923</p></div>
+            <form>
+                <div class="form-group"><label class="form-label" style="color:var(--secondary)">Update Note</label><textarea class="modal-input" rows="4">Issue persists.</textarea></div>
+                <div style="display:flex; gap:15px; margin-top:20px;">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal('editTicketModal')">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="alert('Saved!'); closeModal('editTicketModal')">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="viewTicketModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeModal('viewTicketModal')"></i>
+            <div class="modal-header">
+                <h2>Ticket Details</h2>
+                <span class="status-badge status-pending">In Progress</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="color: white; margin-bottom: 5px;">Server Room Overheating</h4>
+                <p style="color: var(--secondary); font-size: 0.9rem;">Reported: Feb 07, 2026</p>
+                <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 10px 0;">
+                <p style="color: #ddd;">The main server rack is reaching 85°C. AC unit seems to be malfunctioning.</p>
+            </div>
+            <h4 style="color: var(--primary);">Technician Reply:</h4>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div class="user-avatar" style="width: 30px; height: 30px;">JS</div>
+                <p style="color: white; font-size: 0.9rem;">"I am on my way. ETA 20 mins."</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="callModal">
+        <div class="modal-content" style="text-align: center;">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeModal('callModal')"></i>
+            <div style="width: 60px; height: 60px; background: rgba(100, 255, 218, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                <i class="fa-solid fa-phone" style="font-size: 1.5rem; color: var(--primary);"></i>
+            </div>
+            <h2 style="color: white;">+94 11 234 5678</h2>
+            <p style="color: var(--secondary); margin-bottom: 20px;">Available 24/7 for Critical Issues</p>
+            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; margin-bottom: 20px;">
+                <p style="font-size: 0.85rem; color: white;"><strong>General Inquiries:</strong> 9:00 AM - 5:00 PM</p>
+            </div>
+            <button class="btn btn-primary" onclick="window.location.href='tel:+94112345678'" style="width: 100%;">Dial Now</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content" style="text-align: center;">
+            <i class="fa-solid fa-xmark close-modal" onclick="closeModal('deleteModal')"></i>
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: #e74c3c; margin-bottom: 15px;"></i>
+            <h2 style="color: white;">Cancel Ticket?</h2>
+            <p style="color: var(--secondary); margin-bottom: 25px;">Are you sure you want to cancel this support request? This action cannot be undone.</p>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-glass" onclick="closeModal('deleteModal')" style="flex: 1;">Go Back</button>
+                <button class="btn btn-danger" onclick="alert('Ticket Cancelled'); closeModal('deleteModal')" style="flex: 1; background: #e74c3c; color: white; border: none;">Yes, Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-backdrop" id="chatBackdrop"></div>
+    <div class="live-chat-panel" id="liveChatPanel">
+        <div class="chat-panel-header">
+            <h4>Support Agent</h4>
+            <button class="btn-close-chat" id="closeLiveChat"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="chat-panel-body" id="popupChatBody">
+            <div class="message-bubble msg-in">Hello! How can I help?</div>
+        </div>
+        <div class="chat-panel-footer">
+            <input type="text" id="popupChatInput" class="modal-input" placeholder="Type...">
+            <button id="popupSendBtn" class="btn btn-primary" style="border-radius: 50%; width: 40px; height: 40px;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="../js/customer_support.js"></script>
+    <script src="../js/live_chat_popup.js"></script>
+    <script src="../js/action_menu.js"></script>
+    <script src="../js/dashboard.js"></script>
+    
+    <script>
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            // Close any open action menus
+            document.querySelectorAll('.action-menu.active').forEach(m => m.classList.remove('active'));
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+    </script>
+</body>
+</html>
