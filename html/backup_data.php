@@ -1,3 +1,15 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . "/../php/auth.php";  // adjust path if needed
+
+// Only Admin can access
+$u = require_login("Admin");
+
+// values from your auth.php return
+$userName = (string)($u["username"] ?? "User");
+$role     = (string)($u["role"] ?? "");
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -74,7 +86,7 @@
             >
           </li>
           <li class="nav-item">
-            <a href="backup_data.html" class="nav-link active"
+            <a href="backup_data.php" class="nav-link active"
               ><i class="fa-solid fa-database"></i> Backup / Data</a
             >
           </li>
@@ -98,10 +110,20 @@
               Secure database backups and disaster recovery.
             </p>
           </div>
+
+          <!-- ✅ Dynamic logged-in user -->
           <div class="user-profile">
-            <span>Admin User</span>
-            <div class="user-avatar">AD</div>
-          </div>
+  <div>
+    <span><?= htmlspecialchars($userName) ?></span><br />
+    <small style="color: var(--secondary)">
+      <?= htmlspecialchars(ucfirst(strtolower($role))) ?>
+    </small>
+  </div>
+  <div class="user-avatar">
+    <?= strtoupper(substr($userName, 0, 1)) ?>
+  </div>
+
+</div>
         </header>
 
         <div class="dashboard-grid">
@@ -139,7 +161,7 @@
                 id="lastBackupText"
                 style="
                   color: var(--primary);
-                  font-family: &quot;Courier New&quot;, monospace;
+                  font-family: 'Courier New', monospace;
                 "
               >
                 Feb 07, 2026 - 03:00 AM
@@ -345,5 +367,20 @@
 
     <script src="../js/backup.js"></script>
     <script src="../js/dashboard.js"></script>
+    <script>
+  // Force correct user info even if dashboard.js overrides it
+  (function () {
+    const name = <?= json_encode($fullName) ?>;
+    const role = <?= json_encode($role) ?>;
+
+    const n = document.getElementById("uiUserName");
+    const r = document.getElementById("uiUserRole");
+    const a = document.getElementById("uiUserAvatar");
+
+    if (n) n.textContent = name;
+    if (r) r.textContent = role ? (role.charAt(0).toUpperCase() + role.slice(1)) : "";
+    if (a) a.textContent = name ? name.trim().charAt(0).toUpperCase() : "U";
+  })();
+</script>
   </body>
 </html>
