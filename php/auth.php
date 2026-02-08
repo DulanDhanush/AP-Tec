@@ -6,80 +6,68 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-/** normalize role strings once */
-function norm_role(string $r): string {
-    return strtolower(trim($r));
-}
+require_once __DIR__ . "/db.php";
 
 /**
- * Web pages: redirects to login if not allowed
- * @param string|array $roles Allowed role(s) (any casing)
+ * Require login for normal pages.
+ * @param string|array $roles Allowed role(s)
+ * @return array user info: user_id, username, full_name, role, status
  */
 function require_login(string|array $roles = []): array
 {
-    $uid  = (int)($_SESSION["user_id"] ?? 0);
-    $role = norm_role((string)($_SESSION["role"] ?? ""));
+    global $pdo;
 
+    $allowed = is_array($roles) ? $roles : [$roles];
+    $allowed = array_values(array_filter(array_map(
+        fn($r) => strtolower(trim((string)$r)),
+        $allowed
+    )));
+
+    $uid = (int)($_SESSION["user_id"] ?? 0);
     if ($uid <= 0) {
         header("Location: ../html/login.html");
         exit;
     }
 
-    $allowed = is_array($roles) ? $roles : [$roles];
-    $allowed = array_values(array_filter(array_map(
-        fn($v) => norm_role((string)$v),
-        $allowed
-    )));
+    // ✅ always fetch real user from DB
+    $stmt = $pdo->prepare("
+        SELECT user_id, username, full_name, role, status
+        FROM users
+        WHERE user_id = :uid
+        LIMIT 1
+    ");
+    $stmt->execute([":uid" => $uid]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!empty($allowed) && !in_array($role, $allowed, true)) {
-        // logged in but not permitted
+    if (!$user) {
+        session_destroy();
         header("Location: ../html/login.html");
         exit;
     }
 
-    return [
-        "user_id"   => $uid,
-        "username"  => (string)($_SESSION["username"] ?? ""),
-        "role"      => $role,
-        "full_name" => (string)($_SESSION["name"] ?? ""),
-        "name"      => (string)($_SESSION["name"] ?? ""),
-    ];
-}
-
-/**
- * APIs: returns JSON error instead of redirect
- * @param string|array $roles Allowed role(s) (any casing)
- */
-function require_login_api(string|array $roles = []): array
-{
-    $uid  = (int)($_SESSION["user_id"] ?? 0);
-    $role = norm_role((string)($_SESSION["role"] ?? ""));
-
-    if ($uid <= 0) {
-        http_response_code(401);
-        header("Content-Type: application/json; charset=utf-8");
-        echo json_encode(["ok" => false, "error" => "Unauthorized"]);
+    // ✅ block non-active accounts
+    if ((string)($user["status"] ?? "") !== "Active") {
+        session_destroy();
+        header("Location: ../html/login.html");
         exit;
     }
 
-    $allowed = is_array($roles) ? $roles : [$roles];
-    $allowed = array_values(array_filter(array_map(
-        fn($v) => norm_role((string)$v),
-        $allowed
-    )));
-
+    $role = strtolower(trim((string)($user["role"] ?? "")));
     if (!empty($allowed) && !in_array($role, $allowed, true)) {
-        http_response_code(403);
-        header("Content-Type: application/json; charset=utf-8");
-        echo json_encode(["ok" => false, "error" => "Forbidden"]);
+        header("Location: ../html/login.html");
         exit;
     }
 
+    // ✅ keep session synced (so dashboard always changes correctly)
+    $_SESSION["username"]  = (string)($user["username"] ?? "");
+    $_SESSION["full_name"] = (string)($user["full_name"] ?? "");
+    $_SESSION["role"]      = $role;
+
     return [
-        "user_id"   => $uid,
-        "username"  => (string)($_SESSION["username"] ?? ""),
+        "user_id"   => (int)$user["user_id"],
+        "username"  => (string)$user["username"],
+        "full_name" => (string)$user["full_name"],
         "role"      => $role,
-        "full_name" => (string)($_SESSION["name"] ?? ""),
-        "name"      => (string)($_SESSION["name"] ?? ""),
+        "status"    => (string)$user["status"],
     ];
 }

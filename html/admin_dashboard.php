@@ -4,7 +4,11 @@ declare(strict_types=1);
 require_once __DIR__ . "/../php/auth.php";
 require_once __DIR__ . "/../php/db.php";
 
-$user = require_login(["Admin","Owner"]);
+$user = require_login(["Admin"]); // ✅ your DB role enum is Admin/Owner/Employee/Customer
+
+require_once __DIR__ . "/../php/logger.php";
+log_event($pdo, "INFO", "Dashboard", "Admin opened dashboard", (int)$user["user_id"]);
+
 // ✅ Prevent browser cache
 header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
@@ -25,8 +29,7 @@ try {
     $pendingApprovals = 0;
 }
 
-// ---------- Security Alerts (from DB) ----------
-// Count WARNING + ERROR logs in last 7 days
+// ---------- Security Alerts (WARNING + ERROR last 7 days) ----------
 try {
     $stmt = $pdo->prepare("
         SELECT COUNT(*)
@@ -40,8 +43,7 @@ try {
     $securityAlerts = 0;
 }
 
-// ---------- Server Uptime (from DB) ----------
-// Calculate uptime from last 24h logs: uptime = (1 - errors/total)*100
+// ---------- Server Uptime (fallback method: errors/total logs last 24h) ----------
 try {
     $totalStmt = $pdo->prepare("
         SELECT COUNT(*)
@@ -64,22 +66,23 @@ try {
         $serverUptime = "100%";
     } else {
         $uptime = (1 - ($errors24h / max(1, $totalLogs24h))) * 100;
-        if ($uptime < 0) $uptime = 0;
-        if ($uptime > 100) $uptime = 100;
+        $uptime = max(0, min(100, $uptime));
         $serverUptime = number_format($uptime, 0) . "%";
     }
 } catch (Throwable $e) {
     $serverUptime = "0%";
 }
 
-// ---------- Recent system logs ----------
+// ---------- Recent system logs (REAL schema: includes module + ip) ----------
 try {
     $stmt = $pdo->query("
         SELECT 
             sl.created_at,
             COALESCE(u.username, 'System') AS username,
             sl.message,
-            sl.level
+            sl.level,
+            sl.module,
+            sl.ip_address
         FROM system_logs sl
         LEFT JOIN users u ON u.user_id = sl.user_id
         ORDER BY sl.created_at DESC
@@ -90,11 +93,13 @@ try {
     $logs = [];
 }
 
+// ✅ Your DB level enum is INFO/WARNING/ERROR (no SUCCESS)
+// Map INFO -> Success badge for your UI
 function badge_class(string $level): array {
     $level = strtoupper(trim($level));
     if ($level === "ERROR")   return ["status-badge status-pending", "Error"];
     if ($level === "WARNING") return ["status-badge status-pending", "Warning"];
-    return ["status-badge status-active", "Success"];
+    return ["status-badge status-active", "Success"]; // INFO
 }
 ?>
 <!DOCTYPE html>
@@ -156,7 +161,7 @@ function badge_class(string $level): array {
         <header class="top-bar">
             <div class="page-title">
                 <h1>System Overview</h1>
-                <p style="color: var(--secondary);">
+                <p style="color: var(--secondary); margin-top: 6px;">
                     Welcome back, <?= htmlspecialchars(($user["full_name"] ?? "") ?: "Administrator") ?>.
                 </p>
             </div>
@@ -167,7 +172,9 @@ function badge_class(string $level): array {
                     <?php
                         $name = (($user["full_name"] ?? "") ?: ($user["username"] ?? "") ?: "Admin");
                         $parts = preg_split('/\s+/', trim($name));
-                        $initials = strtoupper(substr($parts[0] ?? 'A', 0, 1) . substr($parts[1] ?? 'D', 0, 1));
+                        $first = $parts[0] ?? "A";
+                        $second = $parts[1] ?? $first;
+                        $initials = strtoupper(substr($first, 0, 1) . substr($second, 0, 1));
                         echo htmlspecialchars($initials);
                     ?>
                 </div>
@@ -220,9 +227,12 @@ function badge_class(string $level): array {
             <div class="wide-widget" style="grid-column: span 4;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
                     <h3 style="color: white;">Recent System Activity</h3>
-                    <button class="btn" style="padding: 5px 15px; font-size: 0.8rem; border: 1px solid var(--border-glass); color: var(--primary); background: transparent;">
+
+                    <!-- ✅ View All works now -->
+                    <a href="system_logs.php" class="btn"
+                       style="padding: 5px 15px; font-size: 0.8rem; border: 1px solid var(--border-glass); color: var(--primary); background: transparent; text-decoration:none;">
                         View All
-                    </button>
+                    </a>
                 </div>
 
                 <table class="table-responsive">

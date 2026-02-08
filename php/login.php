@@ -10,8 +10,8 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-$username = trim($_POST["username"] ?? "");
-$password = $_POST["password"] ?? "";
+$username = trim((string)($_POST["username"] ?? ""));
+$password = (string)($_POST["password"] ?? "");
 
 if ($username === "" || $password === "") {
     header("Location: ../html/login.html");
@@ -33,38 +33,28 @@ $stmt->execute([
 ]);
 
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
 if (!$user) {
     header("Location: ../html/login.html");
     exit;
 }
 
-// ✅ PASSWORD CHECK (supports hashed or plain)
-$stored = (string)$user["password_hash"];
-
-if (str_starts_with($stored, '$2y$')) {
-    if (!password_verify($password, $stored)) {
-        header("Location: ../html/login.html");
-        exit;
-    }
-} else {
-    if ($stored !== $password) {
-        header("Location: ../html/login.html");
-        exit;
-    }
+// ✅ PLAIN PASSWORD CHECK ONLY
+$stored = (string)($user["password_hash"] ?? "");
+if ($stored !== $password) {
+    header("Location: ../html/login.html");
+    exit;
 }
 
-// ✅ LOGIN SUCCESS (clear old session to avoid wrong role)
+// ✅ LOGIN SUCCESS (clear old session + new session id)
 $_SESSION = [];
 session_regenerate_id(true);
 
-$_SESSION["user_id"]  = (int)$user["user_id"];
-$_SESSION["username"] = (string)$user["username"];
-$_SESSION["name"]     = (string)$user["full_name"];
+$_SESSION["user_id"]    = (int)$user["user_id"];
+$_SESSION["username"]   = (string)$user["username"];
+$_SESSION["full_name"]  = (string)$user["full_name"];  // ✅ store with clear key
+$_SESSION["role"]       = strtolower(trim((string)$user["role"])); // normalize
 
-// ✅ normalize role once
-$role = strtolower(trim((string)$user["role"]));
-$_SESSION["role"] = $role;
+$role = $_SESSION["role"];
 
 // ✅ redirect
 switch ($role) {
