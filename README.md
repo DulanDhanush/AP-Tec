@@ -17,7 +17,11 @@ https://aptecenterprisecontrol.great-site.net/?i=1
 
 ## 🎥 Demo Video
 Watch the system in action:  
-*Add your video link here*
+
+
+https://github.com/user-attachments/assets/f7fa27a3-2c04-4512-96c7-1f0e6c827323
+
+
 
 ---
 
