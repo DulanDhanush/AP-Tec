@@ -6,29 +6,27 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-green)
 
 ## 📌 Project Overview
+**AP-Tec Enterprise Control System** is a web-based workflow management platform developed using **PHP, MySQL, HTML, CSS, and JavaScript**.
 
-AP-Tec Enterprise Control System is a web-based enterprise workflow management platform developed using **PHP, MySQL, HTML, CSS, and JavaScript**.
-
-The system centralizes and digitizes internal organizational processes such as:
-
-- Leave Requests
-- Purchase Orders
-- Contract Renewals
-- Administrative Approval Workflows
-- Report Generation
+The system digitizes and centralizes internal enterprise processes such as leave requests, purchase approvals, and contract renewals. It provides administrators with a unified dashboard to monitor and control organizational workflows.
 
 🌐 **Live Demo:**  
 https://aptecenterprisecontrol.great-site.net/?i=1  
 
 ---
 
-## 🎯 Objectives
+## 🎥 Demo Video
+Watch the system in action:  
+*Add your video link here*
 
+---
+
+## 🎯 Project Objectives
 - Digitize enterprise approval workflows
-- Provide centralized monitoring for administrators
-- Improve efficiency in request handling
-- Maintain structured enterprise records
-- Generate reports for operational insights
+- Provide centralized administrative control
+- Improve request handling efficiency
+- Maintain structured organizational records
+- Generate operational and analytical reports
 
 ---
 
@@ -42,7 +40,6 @@ https://aptecenterprisecontrol.great-site.net/?i=1
 ---
 
 ### 📄 Approval Workflow System
-
 Supports multiple request types:
 
 - Leave Requests
@@ -50,7 +47,6 @@ Supports multiple request types:
 - Contract Renewals
 
 Each request includes:
-
 - Requester ID
 - Request Type
 - Description
@@ -62,24 +58,34 @@ Each request includes:
 ---
 
 ### 📊 Administrative Dashboard
-
 - View all submitted requests
 - Filter by status
-- Monitor enterprise operations in real time
+- Real-time operational monitoring
 - Centralized workflow control
 
 ---
 
-### 📑 Report Generation Module
+### 📑 Report Generation & Export
+- Generate approval reports
+- Filter by request type
+- Status-based summaries
+- Export reports (PDF or structured output)
 
-The system includes a dynamic reporting feature that allows:
+---
 
-- Generating approval reports
-- Filtering reports by request type
-- Viewing status-based summaries
-- Export-ready structured data (based on implementation)
+### 📈 Analytical Charts
+- Visual representation of request data
+- Status-based analytics
+- Operational insights for administrators
+- Dashboard-level performance metrics
 
-This enhances decision-making and enterprise monitoring capabilities.
+---
+
+### 📜 Activity Logging System
+- Tracks important system actions
+- Logs user activities and system events
+- Helps with auditing and monitoring
+- Improves accountability and traceability
 
 ---
 
@@ -97,8 +103,8 @@ This enhances decision-making and enterprise monitoring capabilities.
 - MySQL / MariaDB
 
 ### Server Compatibility
-- Apache (XAMPP compatible)
-- Shared hosting compatible
+- Apache (XAMPP)
+- Shared hosting environments
 
 ---
 
@@ -112,7 +118,7 @@ This enhances decision-making and enterprise monitoring capabilities.
 |--------------|-------------|
 | approval_id  | Primary Key |
 | requester_id | Employee/User ID |
-| type         | Leave / Purchase Order / Contract Renewal |
+| type         | Request type (Leave / Purchase / Contract) |
 | details      | Request description |
 | amount       | Monetary value (if applicable) |
 | status       | Pending / Approved / Rejected |
@@ -120,17 +126,30 @@ This enhances decision-making and enterprise monitoring capabilities.
 | created_at   | Timestamp |
 
 ---
+
 AP-Tec/
-│
+│ 
+
 ├── css/
+
 ├── js/
+
 ├── html/
+
 ├── php/
+
 ├── uploads/
+
 ├── backups/
+
 ├── index.html
+
 ├── style.css
+
 └── aptec_db.sql
+
+
+## 📁 Project Structure
 
 
 ---
@@ -138,72 +157,76 @@ AP-Tec/
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone Repository
-
 ```bash
 git clone https://github.com/DulanDhanush/AP-Tec.git
 ```
 
-Move the project folder into:
+### Move the folder into:
 
-2️⃣ Database Setup
+htdocs/   (XAMPP)
+
+### 2️⃣ Database Setup
 
 Open phpMyAdmin
 
-Create database:aptec_db
+Create database:
+aptec_db
 
-Import:aptec_db.sql
+Import:
 
-3️⃣ Configure Database Connection
+aptec_db.sql
+### 3️⃣ Configure Database Connection
 
-Update your database configuration file:
+Update your database config file:
 
 $host = "localhost";
 $username = "root";
 $password = "";
 $database = "aptec_db";
 
-4️⃣ Run the Application
+### 4️⃣ Run the Application
 
 Start Apache and MySQL, then open:
+
 http://localhost/AP-Tec/
 
-🔒 Security Considerations
+## 🔒 Security Considerations
 
-Current Implementation:
+Current Implementation
 
 Session-based authentication
 
 Role-based workflow control
 
-Structured ENUM-based status integrity
+Structured status handling
 
-Recommended Improvements:
+Activity logging system
+
+Recommended Improvements
 
 Password hashing using password_hash()
-
-Prepared statements (PDO / MySQLi)
 
 CSRF protection
 
 Input validation & sanitization
 
-Activity logging system
+API token-based authentication
 
-🚀 Future Enhancements
+Two-factor authentication (2FA)
+
+## 🚀 Future Enhancements
 
 Email notifications for approvals
 
-PDF/Excel report export
-
-Dashboard analytics charts
-
 REST API support
 
-MVC architecture implementation
+MVC architecture refactor
 
 UI modernization (Bootstrap / Tailwind)
 
-📈 Learning Outcomes
+Mobile-responsive optimization
+
+## 📈 Learning Outcomes
 
 This project demonstrates:
 
@@ -215,26 +238,23 @@ Database schema planning
 
 Role-based access implementation
 
-Report generation logic
+Report generation and export
+
+Data analytics visualization
+
+Activity logging and auditing
 
 Real-world business process modeling
 
-👨‍💻 Developer
+## 👨‍💻 Developer
 
 Dulan Dhanush Kandeepan
 Diploma in Software Engineering – NIBM
 Aspiring Junior Software Engineer
 
-GitHub: https://github.com/DulanDhanush
+GitHub:
+https://github.com/DulanDhanush
 
-📜 License
+## 📜 License
 
 This project is licensed under the Apache License 2.0.
-
-You may use, modify, and distribute this software under the terms of the Apache License 2.0.
-
-
-
-
-## 📂 Project Structure
-
