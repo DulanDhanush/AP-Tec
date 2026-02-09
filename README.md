@@ -19,7 +19,9 @@ https://aptecenterprisecontrol.great-site.net/?i=1
 Watch the system in action:  
 
 
-https://github.com/user-attachments/assets/f7fa27a3-2c04-4512-96c7-1f0e6c827323
+
+https://github.com/user-attachments/assets/2ab9935d-d454-4fe3-9ef9-7f0c52385989
+
 
 
 
