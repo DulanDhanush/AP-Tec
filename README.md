@@ -175,17 +175,17 @@ htdocs/   (XAMPP)
 
 ### 2️⃣ Database Setup
 
-Open phpMyAdmin
+- Open phpMyAdmin
 
-Create database:
+- Create database:
 aptec_db
 
-Import:
+- Import:
 
 aptec_db.sql
 ### 3️⃣ Configure Database Connection
 
-Update your database config file:
+- Update your database config file:
 
 $host = "localhost";
 
@@ -198,7 +198,7 @@ $database = "aptec_db";
 
 ### 4️⃣ Run the Application
 
-Start Apache and MySQL, then open:
+- Start Apache and MySQL, then open:
 
 http://localhost/AP-Tec/
 
@@ -258,11 +258,10 @@ http://localhost/AP-Tec/
 
 Dulan Dhanush Kandeepan
 
-Diploma in Software Engineering – NIBM
+-- Portfolio:
+https://dulandhanush.github.io/portfolio-website/
 
-Aspiring Junior Software Engineer
-
-GitHub:
+-- GitHub:
 https://github.com/DulanDhanush
 
 ## 📜 License
