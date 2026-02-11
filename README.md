@@ -23,10 +23,6 @@ Watch the system in action:
 https://github.com/user-attachments/assets/2ab9935d-d454-4fe3-9ef9-7f0c52385989
 
 
-## Live Site 
-
-https://aptecenterprisecontrol.great-site.net/?i=1
-
 ---
 
 ## 🎯 Project Objectives
