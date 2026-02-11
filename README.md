@@ -188,9 +188,13 @@ aptec_db.sql
 Update your database config file:
 
 $host = "localhost";
+
 $username = "root";
+
 $password = "";
+
 $database = "aptec_db";
+
 
 ### 4️⃣ Run the Application
 
@@ -202,58 +206,60 @@ http://localhost/AP-Tec/
 
 ### Current Implementation
 
-Session-based authentication
+- Session-based authentication
 
-Role-based workflow control
+- Role-based workflow control
 
-Structured status handling
+- Structured status handling
 
-Activity logging system
+- Activity logging system
 
-Recommended Improvements
+### Recommended Improvements
 
-CSRF protection
+- CSRF protection
 
-Input validation & sanitization
+- Input validation & sanitization
 
 
 
 ## 🚀 Future Enhancements
 
-Email notifications for approvals
+- Email notifications for approvals
 
-REST API support
+- REST API support
 
-MVC architecture refactor
+- MVC architecture refactor
 
-UI modernization (Bootstrap / Tailwind)
+- UI modernization (Bootstrap / Tailwind)
 
-Mobile-responsive optimization
+- Mobile-responsive optimization
 
 ## 📈 Learning Outcomes
 
-This project demonstrates:
+### This project demonstrates:
 
-Full-stack web development
+- Full-stack web development
 
-Enterprise workflow system design
+- Enterprise workflow system design
 
-Database schema planning
+- Database schema planning
 
-Role-based access implementation
+- Role-based access implementation
 
-Report generation and export
+- Report generation and export
 
-Data analytics visualization
+- Data analytics visualization
 
-Activity logging and auditing
+- Activity logging and auditing
 
-Real-world business process modeling
+- Real-world business process modeling
 
 ## 👨‍💻 Developer
 
 Dulan Dhanush Kandeepan
+
 Diploma in Software Engineering – NIBM
+
 Aspiring Junior Software Engineer
 
 GitHub:
