@@ -8,7 +8,7 @@
 ## 📌 Project Overview
 **AP-Tec Enterprise Control System** is a web-based workflow management platform developed using **PHP, MySQL, HTML, CSS, and JavaScript**.
 
-The system digitizes and centralizes internal enterprise processes such as leave requests, purchase approvals, and contract renewals. It provides administrators with a unified dashboard to monitor and control organizational workflows.
+The system digitizes and centralizes internal enterprise processes such as leave requests, purchase approvals, assign techninician and contract renewals. It provides administrators with a unified dashboard to monitor and control organizational workflows.
 
 🌐 **Live Demo:**  
 https://aptecenterprisecontrol.great-site.net/?i=1  
@@ -23,7 +23,9 @@ Watch the system in action:
 https://github.com/user-attachments/assets/2ab9935d-d454-4fe3-9ef9-7f0c52385989
 
 
+## Live Site 
 
+https://aptecenterprisecontrol.great-site.net/?i=1
 
 ---
 
@@ -33,6 +35,8 @@ https://github.com/user-attachments/assets/2ab9935d-d454-4fe3-9ef9-7f0c52385989
 - Improve request handling efficiency
 - Maintain structured organizational records
 - Generate operational and analytical reports
+- Overview the system
+- Make a interconnected system
 
 ---
 
@@ -51,6 +55,7 @@ Supports multiple request types:
 - Leave Requests
 - Purchase Orders
 - Contract Renewals
+- Message with assigned technician with in the system
 
 Each request includes:
 - Requester ID
@@ -111,6 +116,7 @@ Each request includes:
 ### Server Compatibility
 - Apache (XAMPP)
 - Shared hosting environments
+- Infintyfree
 
 ---
 
@@ -198,7 +204,7 @@ http://localhost/AP-Tec/
 
 ## 🔒 Security Considerations
 
-Current Implementation
+### Current Implementation
 
 Session-based authentication
 
@@ -210,15 +216,11 @@ Activity logging system
 
 Recommended Improvements
 
-Password hashing using password_hash()
-
 CSRF protection
 
 Input validation & sanitization
 
-API token-based authentication
 
-Two-factor authentication (2FA)
 
 ## 🚀 Future Enhancements
 
